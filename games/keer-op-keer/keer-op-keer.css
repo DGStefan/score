@@ -1,0 +1,494 @@
+/* Keer op Keer — speelblad in de stijl van het papieren blad (donker petrol, witte vakken) */
+
+.wrap.kok-wide {
+  max-width: 1400px;
+}
+
+.topbar h1 .muted {
+  font-weight: 400;
+}
+
+/* ---------- Keuzescherm ---------- */
+.kok-layouts {
+  display: grid;
+  gap: var(--gap);
+}
+
+.kok-layout {
+  display: grid;
+  grid-template-columns: auto 140px 1fr;
+  gap: 14px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.kok-layout input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+}
+
+.kok-layout p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+.kok-layout.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.kok-mini {
+  display: grid;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #0f3c43;
+}
+
+.kok-mini i {
+  aspect-ratio: 1;
+  border-radius: 2px;
+}
+
+/* ---------- Bord ---------- */
+.kok-board {
+  --board: #0f3c43;
+  --board-2: #0b2f35;
+  --paper: #ffffff;
+  --paper-ink: #10282b;
+  --red: #e2262f;
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+  border-radius: 20px;
+  background: radial-gradient(120% 100% at 30% 0%, var(--board) 0%, var(--board-2) 100%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  color: #fff;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif;
+}
+
+/* Smal / staand: blad bovenaan, daaronder links kleurbonus + jokers, rechts de score */
+.kok-board {
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'sheet sheet'
+    'colors scores'
+    'jokers scores'
+    'help help';
+}
+
+/* Breed / liggend: score-paneel rechts, jokers onder het blad */
+@media (min-width: 900px) {
+  .kok-board {
+    grid-template-columns: 1fr 210px;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'sheet colors'
+      'sheet scores'
+      'jokers help';
+  }
+}
+
+.kok-sheet-wrap {
+  grid-area: sheet;
+  min-width: 0;
+}
+
+.kok-colors {
+  grid-area: colors;
+}
+
+.kok-scores {
+  grid-area: scores;
+  align-self: start;
+}
+
+.kok-joker-strip {
+  grid-area: jokers;
+  align-self: start;
+}
+
+.kok-help {
+  grid-area: help;
+}
+
+.kok-sheet-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px;
+}
+
+.kok-sheet {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(34px, 1fr));
+  gap: 4px;
+  min-width: calc(var(--cols) * 38px);
+}
+
+/* ---------- Witte vakjes (kolomletters, punten) ---------- */
+.kok-head,
+.kok-points {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  min-width: 0;
+  aspect-ratio: 1 / 0.92;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: clamp(0.95rem, 1.9vw, 1.35rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  position: relative;
+}
+
+.kok-head {
+  margin-bottom: 4px;
+}
+
+.kok-head.start,
+.kok-points.start {
+  color: var(--red);
+}
+
+.kok-head.complete {
+  background: #76c442;
+  color: var(--paper-ink);
+}
+
+.kok-points.first {
+  margin-top: 8px;
+}
+
+.kok-points.later {
+  background: rgb(255 255 255 / 0.88);
+}
+
+/* Omcirkeld = deze punten heb jij */
+.kok-points.won::before,
+.kok-tile.won::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 3px solid #1a9b5b;
+}
+
+/* Doorgestreept = een ander was eerder */
+.kok-points.taken,
+.kok-tile.taken {
+  opacity: 0.55;
+}
+
+.kok-points.taken::after,
+.kok-tile.taken::after {
+  content: '';
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 50%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--red);
+  transform: rotate(-35deg);
+}
+
+/* ---------- Kleurvakjes ---------- */
+.kok-cell {
+  --light: color-mix(in srgb, var(--fill) 62%, #fff);
+  position: relative;
+  aspect-ratio: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 24%;
+  background: radial-gradient(circle at 50% 50%, var(--light) 0 52%, var(--fill) 54%);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.12);
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.kok-cell.star {
+  background: var(--fill);
+}
+
+/* Startkolom: witte rand zoals op het blad */
+.kok-cell.start {
+  box-shadow: 0 0 0 2px #fff, inset 0 -2px 0 rgb(0 0 0 / 0.12);
+}
+
+.kok-star {
+  position: absolute;
+  inset: 12%;
+  color: var(--light);
+}
+
+.kok-star svg,
+.kok-icon-star svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Kruisje */
+.kok-cell.crossed::before,
+.kok-cell.crossed::after {
+  content: '';
+  position: absolute;
+  left: 13%;
+  right: 13%;
+  top: 50%;
+  height: 13%;
+  min-height: 3px;
+  margin-top: -6.5%;
+  background: #10282b;
+  border-radius: 4px;
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+.kok-cell.crossed::after {
+  transform: rotate(-45deg);
+}
+
+/* Nog niet bereikbaar (niet aansluitend) */
+.kok-cell.blocked {
+  filter: saturate(0.7) brightness(0.78);
+}
+
+.kok-cell.shake {
+  animation: kok-shake 0.35s;
+}
+
+@keyframes kok-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ---------- Jokerstrook ---------- */
+.kok-joker-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  justify-self: start;
+}
+
+.kok-joker-label {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+.kok-joker {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--paper-ink);
+  background: #fff;
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: 1.2rem;
+}
+
+.kok-joker.used {
+  color: #a9b4b6;
+  border-color: #a9b4b6;
+}
+
+.kok-joker.used::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--red);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+}
+
+/* ---------- Kleurbonus en score ---------- */
+.kok-colors {
+  display: grid;
+  gap: 6px;
+  justify-content: start;
+  align-self: start;
+}
+
+@media (min-width: 900px) {
+  .kok-colors {
+    justify-content: end;
+  }
+}
+
+.kok-color {
+  display: grid;
+  grid-template-columns: auto 44px 44px;
+  align-items: center;
+  gap: 6px;
+}
+
+.kok-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.7);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 3.2em;
+}
+
+.kok-tile {
+  position: relative;
+  width: 44px;
+  height: 40px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--fill);
+  color: color-mix(in srgb, var(--fill) 35%, #000);
+  font-weight: 900;
+  font-size: 1.3rem;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.15);
+}
+
+.kok-tile.won::before {
+  border-color: #fff;
+}
+
+.kok-color.complete .kok-count {
+  color: #fff;
+}
+
+.kok-scores {
+  display: grid;
+  gap: 6px;
+}
+
+.kok-scores hr {
+  border: none;
+  border-top: 2px dashed rgb(255 255 255 / 0.6);
+  margin: 4px 0;
+  width: 100%;
+}
+
+.kok-score-row {
+  display: grid;
+  grid-template-columns: 1fr 18px 84px;
+  align-items: center;
+  gap: 6px;
+}
+
+.kok-label {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  text-align: right;
+  justify-self: end;
+  letter-spacing: 0.03em;
+}
+
+.kok-score-row.bonus .kok-label {
+  background: linear-gradient(90deg, #76c442, #fbd338, #6fcdf2, #ec3a7f, #f6922f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.kok-sign {
+  font-weight: 900;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.kok-sign.plus {
+  color: #76c442;
+}
+
+.kok-sign.minus {
+  color: var(--red);
+}
+
+.kok-box {
+  display: grid;
+  place-items: center end;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.kok-score-row.total .kok-box {
+  height: 46px;
+  font-size: 1.6rem;
+}
+
+.kok-icon-joker {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--paper-ink);
+  font-size: 0.8rem;
+  vertical-align: -4px;
+}
+
+.kok-icon-star {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  color: #fff;
+  vertical-align: -4px;
+}
+
+.kok-help {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgb(255 255 255 / 0.65);
+  text-align: right;
+}
+
+/* ---------- Einde-spel melding ---------- */
+.kok-end {
+  margin-bottom: var(--gap);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: #fbd338;
+  color: #10282b;
+  font-weight: 700;
+}
+
+.kok-end[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kok-cell.shake {
+    animation: none;
+  }
+}
