@@ -7,9 +7,12 @@ import { sessionStore } from '@shared/session';
 import { readJSON, writeJSON } from '@shared/storage';
 
 /**
- * Algemeen scoreblad: per speler punten erbij of eraf.
- * De stand wordt opgeslagen als lijst zetten (moves); scores worden daaruit berekend.
- * Daardoor is "ongedaan maken" simpelweg de laatste zet weghalen.
+ * Algemeen scoreblad, in twee vormen:
+ *  - Vrij tellen: per speler punten erbij of eraf, in willekeurige volgorde (moves).
+ *  - Per ronde: na elke ronde voor iedereen de punten invullen (rounds), getoond als
+ *    het klassieke scoreblokje: oude stand, + punten, streep, nieuwe stand.
+ * Scores worden altijd uit de opgeslagen zetten/rondes berekend, zodat ongedaan maken
+ * simpelweg de laatste zet of ronde weghalen is.
  */
 
 const GAME_ID = 'teller';
@@ -20,8 +23,12 @@ interface Move {
   delta: number;
 }
 
+type Entry = 'vrij' | 'ronde';
+
 interface Settings {
   title: string;
+  /** Invoer: vrij tellen of per ronde. */
+  entry: Entry;
   players: string[];
   mode: WinMode;
   start: number;
@@ -33,16 +40,30 @@ interface Settings {
 interface CounterState extends Settings {
   version: typeof VERSION;
   moves: Move[];
+  /** Alleen bij invoer per ronde: rounds[ronde][speler] = punten. */
+  rounds?: number[][];
 }
 
 const store = sessionStore<CounterState>(GAME_ID, VERSION);
 const SETTINGS_KEY = `spel:${GAME_ID}:instellingen`;
-const DEFAULT_SETTINGS: Settings = { title: '', players: ['', ''], mode: 'hoogste', start: 0, tally: false, target: null };
+const DEFAULT_SETTINGS: Settings = {
+  title: '',
+  entry: 'vrij',
+  players: ['', ''],
+  mode: 'hoogste',
+  start: 0,
+  tally: false,
+  target: null,
+};
 
 initPage({ root: '../../', keepAwake: true });
 
 const app = mount('#app');
 let state: CounterState | null = store.load();
+
+/** Per ronde: welke ronde wordt aangepast (null = nieuwe ronde) en wat er al is ingetypt. */
+let editingRound: number | null = null;
+let roundDraft: string[] = [];
 
 function render(): void {
   app.replaceChildren(state ? playView(state) : setupView());
@@ -54,10 +75,35 @@ function update(next: CounterState): void {
   render();
 }
 
+function isRoundMode(s: CounterState): boolean {
+  return (s.entry ?? 'vrij') === 'ronde';
+}
+
+function roundsOf(s: CounterState): number[][] {
+  return s.rounds ?? [];
+}
+
+function hasScores(s: CounterState): boolean {
+  return isRoundMode(s) ? roundsOf(s).length > 0 : s.moves.length > 0;
+}
+
 function scores(s: CounterState): number[] {
   const totals = s.players.map(() => s.start);
-  for (const move of s.moves) totals[move.player] = (totals[move.player] ?? s.start) + move.delta;
+  if (isRoundMode(s)) {
+    for (const round of roundsOf(s)) round.forEach((points, p) => (totals[p] = (totals[p] ?? s.start) + points));
+  } else {
+    for (const move of s.moves) totals[move.player] = (totals[move.player] ?? s.start) + move.delta;
+  }
   return totals;
+}
+
+/** Tussenstanden per ronde: running[ronde][speler] = stand na die ronde. */
+function runningTotals(s: CounterState): number[][] {
+  const totals = s.players.map(() => s.start);
+  return roundsOf(s).map((round) => {
+    round.forEach((points, p) => (totals[p] = (totals[p] ?? s.start) + points));
+    return [...totals];
+  });
 }
 
 function results(s: CounterState): PlayerResult[] {
@@ -198,7 +244,9 @@ function setupView(): HTMLElement {
     const settings: Settings = { ...draft, title: draft.title.trim(), players };
     writeJSON(SETTINGS_KEY, settings);
     rememberPlayers(players);
-    update({ ...settings, version: VERSION, moves: [] });
+    editingRound = null;
+    roundDraft = [];
+    update({ ...settings, version: VERSION, moves: [], rounds: [] });
   };
 
   return h(
@@ -220,6 +268,31 @@ function setupView(): HTMLElement {
             draft.title = (e.target as HTMLInputElement).value;
           },
         }),
+      ),
+      h(
+        'div',
+        { class: 'field' },
+        h('span', null, 'Hoe tel je?'),
+        h(
+          'div',
+          { class: 'segmented' },
+          (['vrij', 'ronde'] as const).map((entry) =>
+            h(
+              'label',
+              null,
+              h('input', {
+                type: 'radio',
+                name: 'entry',
+                checked: draft.entry === entry,
+                onchange: () => {
+                  draft.entry = entry;
+                },
+              }),
+              entry === 'vrij' ? 'Vrij tellen' : 'Per ronde',
+            ),
+          ),
+        ),
+        h('small', { class: 'muted' }, 'Per ronde: na elke ronde vul je voor iedereen de punten in, als op een scoreblokje.'),
       ),
       h(
         'div',
@@ -319,7 +392,7 @@ function setupView(): HTMLElement {
 
 function playView(s: CounterState): HTMLElement {
   const totals = scores(s);
-  const leaders = s.moves.length > 0 ? determineWinners(results(s), s.mode) : [];
+  const leaders = hasScores(s) ? determineWinners(results(s), s.mode) : [];
   const addMove = (player: number, delta: number): void => {
     if (!Number.isFinite(delta) || delta === 0) return;
     const before = goalRanking(s);
@@ -351,7 +424,9 @@ function playView(s: CounterState): HTMLElement {
           [...ranking].map(([p, place]) => `${medal(place)} ${s.players[p] ?? ''}`).join('  ·  '),
         )
       : null,
-    h(
+    isRoundMode(s)
+      ? roundView(s, leaders, ranking)
+      : h(
       'div',
       { class: 'players' },
       s.players.map((name, i) => {
@@ -413,7 +488,7 @@ function playView(s: CounterState): HTMLElement {
         );
       }),
     ),
-    s.moves.length > 0
+    !isRoundMode(s) && s.moves.length > 0
       ? h(
           'details',
           { class: 'log' },
@@ -432,10 +507,19 @@ function playView(s: CounterState): HTMLElement {
         'button',
         {
           class: 'btn-undo',
-          disabled: !lastMove,
-          'aria-label': 'Ongedaan maken',
-          title: 'Ongedaan maken',
-          onclick: () => update({ ...s, moves: s.moves.slice(0, -1) }),
+          disabled: isRoundMode(s) ? roundsOf(s).length === 0 : !lastMove,
+          'aria-label': isRoundMode(s) ? 'Laatste ronde weghalen' : 'Ongedaan maken',
+          title: isRoundMode(s) ? 'Laatste ronde weghalen' : 'Ongedaan maken',
+          onclick: () => {
+            if (isRoundMode(s)) {
+              if (!confirm(`Ronde ${roundsOf(s).length} weghalen?`)) return;
+              editingRound = null;
+              roundDraft = [];
+              update({ ...s, rounds: roundsOf(s).slice(0, -1) });
+            } else {
+              update({ ...s, moves: s.moves.slice(0, -1) });
+            }
+          },
         },
         '↶',
       ),
@@ -445,9 +529,196 @@ function playView(s: CounterState): HTMLElement {
   );
 }
 
-/** Confetti vanaf de kaart van de speler die net het doel haalt. */
+/* ------------------------------------------------------------------ */
+/* Per ronde: het scoreblokje                                          */
+/* ------------------------------------------------------------------ */
+
+function parsePoints(raw: string): number | null {
+  const cleaned = raw.trim().replace('−', '-').replace(',', '.');
+  if (cleaned === '' || cleaned === '-') return null;
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
+
+function roundView(s: CounterState, leaders: string[], ranking: Map<number, number>): HTMLElement {
+  const rounds = roundsOf(s);
+  const running = runningTotals(s);
+  const totals = scores(s);
+  const target = s.target ?? null;
+
+  /* Kop: naam + huidige stand per speler */
+  const head = h(
+    'tr',
+    null,
+    h('th', { class: 'rs-corner' }),
+    s.players.map((name, p) => {
+      const place = ranking.get(p);
+      const classes = ['rs-player'];
+      if (leaders.includes(name)) classes.push('leader');
+      if (place !== undefined) classes.push('reached');
+      if (place !== undefined && place <= 3) classes.push(`place-${place}`);
+      const score = totals[p] ?? s.start;
+      return h(
+        'th',
+        { class: classes.join(' '), 'data-player': p, scope: 'col' },
+        h('span', { class: 'rs-name' }, name),
+        place !== undefined ? h('span', { class: 'goal-badge' }, `${medal(place)} ${place}e`) : null,
+        h('span', { class: 'rs-total' }, formatScore(score)),
+        target !== null
+          ? h('span', { class: 'progress', 'aria-hidden': 'true' }, h('span', { style: `width:${Math.round(progress(s, score) * 100)}%` }))
+          : null,
+      );
+    }),
+  );
+
+  /* Startregel (de "oude score" van ronde 1) */
+  const startRow = h(
+    'tr',
+    { class: 'rs-start' },
+    h('th', { scope: 'row' }, 'Start'),
+    s.players.map(() => h('td', null, h('span', { class: 'rs-run' }, formatScore(s.start)))),
+  );
+
+  /* Per ronde: + punten, streep, nieuwe stand. Tik om aan te passen. */
+  const roundRows = rounds.map((round, r) =>
+    h(
+      'tr',
+      {
+        class: `rs-round${editingRound === r ? ' editing' : ''}`,
+        title: 'Tik om deze ronde aan te passen',
+        onclick: () => {
+          editingRound = r;
+          roundDraft = round.map((v) => String(v));
+          render();
+          app.querySelector<HTMLInputElement>('.rs-entry input')?.focus();
+        },
+      },
+      h('th', { scope: 'row' }, `R${r + 1}`),
+      round.map((points, p) =>
+        h(
+          'td',
+          null,
+          h('span', { class: `rs-delta${points < 0 ? ' neg' : points === 0 ? ' zero' : ''}` }, formatDelta(points)),
+          h('span', { class: 'rs-run' }, formatScore(running[r]?.[p] ?? s.start)),
+        ),
+      ),
+    ),
+  );
+
+  const table = h(
+    'div',
+    { class: 'card rs-wrap' },
+    h('table', { class: 'rs-table' }, h('thead', null, head), h('tbody', null, startRow, ...roundRows)),
+  );
+
+  return h('div', { class: 'rs' }, table, entryCard(s));
+}
+
+/** Invoer voor een nieuwe ronde, of voor het aanpassen van een bestaande. */
+function entryCard(s: CounterState): HTMLElement {
+  const rounds = roundsOf(s);
+  const editing = editingRound;
+  const roundNr = editing === null ? rounds.length + 1 : editing + 1;
+  while (roundDraft.length < s.players.length) roundDraft.push('');
+
+  // Stand vóór deze ronde, om live "= nieuwe stand" te tonen
+  const running = runningTotals(s);
+  const before = editing === null ? scores(s) : editing === 0 ? s.players.map(() => s.start) : (running[editing - 1] ?? []);
+
+  const fields = s.players.map((name, p) => {
+    const preview = h('span', { class: 'rs-preview' });
+    const input = h('input', {
+      type: 'text',
+      inputMode: 'decimal',
+      autocomplete: 'off',
+      placeholder: '0',
+      value: roundDraft[p] ?? '',
+      'aria-label': `Punten ronde ${roundNr} voor ${name}`,
+      enterkeyhint: p === s.players.length - 1 ? 'done' : 'next',
+    });
+    const updatePreview = (): void => {
+      roundDraft[p] = input.value;
+      const pts = parsePoints(input.value) ?? 0;
+      preview.textContent = `= ${formatScore((before[p] ?? s.start) + pts)}`;
+    };
+    input.addEventListener('input', updatePreview);
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const nextInput = app.querySelectorAll<HTMLInputElement>('.rs-entry input')[p + 1];
+      if (nextInput) nextInput.focus();
+      else saveRound(s);
+    });
+    updatePreview();
+    // ± knop: op telefoons heeft het cijfertoetsenbord vaak geen minteken
+    const flip = h(
+      'button',
+      {
+        type: 'button',
+        class: 'rs-flip',
+        'aria-label': `${name}: plus of min`,
+        onclick: () => {
+          const v = input.value.trim();
+          input.value = v.startsWith('-') || v.startsWith('−') ? v.slice(1) : `-${v}`;
+          updatePreview();
+          input.focus();
+        },
+      },
+      '±',
+    );
+    return h('label', { class: 'rs-field' }, h('span', { class: 'rs-field-name' }, name), h('span', { class: 'rs-input' }, flip, input), preview);
+  });
+
+  return h(
+    'div',
+    { class: `card rs-entry${editing !== null ? ' editing' : ''}` },
+    h('h2', null, editing === null ? `Ronde ${roundNr}` : `Ronde ${roundNr} aanpassen`),
+    h('div', { class: 'rs-fields' }, fields),
+    h(
+      'div',
+      { class: 'row stretch' },
+      editing !== null
+        ? h(
+            'button',
+            {
+              type: 'button',
+              onclick: () => {
+                editingRound = null;
+                roundDraft = [];
+                render();
+              },
+            },
+            'Annuleren',
+          )
+        : null,
+      h('button', { type: 'button', class: 'btn-primary', onclick: () => saveRound(s) }, editing === null ? `Ronde ${roundNr} opslaan` : 'Wijziging opslaan'),
+    ),
+  );
+}
+
+function saveRound(s: CounterState): void {
+  const values = s.players.map((_, p) => parsePoints(roundDraft[p] ?? ''));
+  if (values.every((v) => v === null) && !confirm('Niemand heeft punten. Toch een ronde met allemaal 0 opslaan?')) return;
+  const points = values.map((v) => v ?? 0);
+  const rounds = [...roundsOf(s)];
+  if (editingRound === null) rounds.push(points);
+  else rounds[editingRound] = points;
+
+  const beforeRanking = goalRanking(s);
+  const next: CounterState = { ...s, rounds };
+  editingRound = null;
+  roundDraft = [];
+  update(next);
+
+  const after = goalRanking(next);
+  for (const [player, place] of after) {
+    if (!beforeRanking.has(player)) celebrate(next, player, place);
+  }
+}
+
+/** Confetti vanaf de kaart (of kolomkop) van de speler die net het doel haalt. */
 function celebrate(s: CounterState, player: number, place: number): void {
-  const card = app.querySelector<HTMLElement>(`.player[data-player="${player}"]`);
+  const card = app.querySelector<HTMLElement>(`[data-player="${player}"]`);
   const rect = card?.getBoundingClientRect();
   confetti(rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 3 } : {});
   toast(`${medal(place)} ${s.players[player] ?? ''} haalt het doel! (nu ${place}e)`);

@@ -87,6 +87,6 @@ De repo bevat een `Dockerfile` (Node bouwt, nginx serveert) en `nginx.conf` (cac
 
 ## Ideeën / volgende stappen
 
-- Spellen: rondetabel, darts (501/301), Yahtzee, Keer op Keer
+- Spellen: darts (501/301), Yahtzee
 - Export/import van alle data als JSON (back-up of naar ander apparaat)
 - Statistieken per speler in de portal

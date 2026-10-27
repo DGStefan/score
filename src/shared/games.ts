@@ -12,16 +12,9 @@ export const GAMES: readonly GameInfo[] = [
   {
     id: 'teller',
     name: 'Scoreblad',
-    description: 'Punten per speler optellen of aftrekken, met eigen titel. Turven kan ook.',
+    description: 'Vrij tellen of per ronde, met eigen titel, doelscore en turven.',
     icon: '✏️',
     status: 'beschikbaar',
-  },
-  {
-    id: 'rondes',
-    name: 'Rondetabel',
-    description: 'Score per ronde invullen, totalen worden opgeteld. Voor kaartspellen e.d.',
-    icon: '🃏',
-    status: 'binnenkort',
   },
   {
     id: 'darts',

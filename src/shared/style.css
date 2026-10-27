@@ -650,3 +650,205 @@ details.log ol {
     display: none;
   }
 }
+
+/* ---------- Scoreblad per ronde (scoreblokje) ---------- */
+.rs {
+  display: grid;
+  gap: var(--gap);
+}
+
+.rs-wrap {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.rs-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-table th,
+.rs-table td {
+  padding: 8px 12px;
+  text-align: right;
+  min-width: 84px;
+}
+
+/* Rondenummer links, blijft staan bij zijwaarts scrollen */
+.rs-table tbody th,
+.rs-corner {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 52px;
+  width: 52px;
+  text-align: left;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+
+/* Kolomkop per speler */
+.rs-player {
+  vertical-align: bottom;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface);
+}
+
+.rs-player > span {
+  display: block;
+}
+
+.rs-name {
+  font-weight: 700;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rs-player .goal-badge {
+  display: inline-block;
+  margin: 4px 0;
+}
+
+.rs-total {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.rs-player .progress {
+  margin-top: 6px;
+}
+
+.rs-player.leader {
+  box-shadow: inset 0 -4px 0 var(--leader);
+}
+
+.rs-player.place-1 {
+  background: linear-gradient(160deg, #fff6d1, #f3cf6a);
+  color: #231d10;
+}
+
+.rs-player.place-2 {
+  background: linear-gradient(160deg, #ffffff, #d5d9df);
+  color: #231d10;
+}
+
+.rs-player.place-3 {
+  background: linear-gradient(160deg, #fde6d2, #e3a676);
+  color: #231d10;
+}
+
+.rs-player.reached:not(.place-1, .place-2, .place-3) {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+/* Ronderegels: + punten, streep, nieuwe stand */
+.rs-round {
+  cursor: pointer;
+}
+
+.rs-round:nth-child(even) td,
+.rs-round:nth-child(even) th {
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+}
+
+.rs-round.editing td,
+.rs-round.editing th {
+  background: color-mix(in srgb, var(--leader) 22%, var(--surface));
+}
+
+.rs-table td > span {
+  display: block;
+}
+
+.rs-delta {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+  padding-bottom: 2px;
+}
+
+.rs-delta.neg {
+  color: var(--danger);
+}
+
+.rs-delta.zero {
+  color: var(--muted);
+}
+
+/* De streep onder de punten, zoals op papier */
+.rs-run {
+  font-weight: 700;
+  font-size: 1.15rem;
+  border-top: 2px solid currentColor;
+  padding-top: 2px;
+  margin-left: auto;
+  width: max-content;
+  min-width: 3ch;
+}
+
+.rs-start .rs-run {
+  border-top: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Invoer van een ronde */
+.rs-entry h2 {
+  margin-top: 0;
+}
+
+.rs-entry.editing {
+  border-color: var(--leader);
+  box-shadow: inset 0 0 0 2px var(--leader);
+}
+
+.rs-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rs-field {
+  display: grid;
+  gap: 4px;
+}
+
+.rs-field-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rs-input {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 6px;
+}
+
+.rs-input input {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.rs-flip {
+  padding: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.rs-preview {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
