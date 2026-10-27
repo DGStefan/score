@@ -652,18 +652,24 @@ details.log ol {
 }
 
 /* ---------- Scoreblad per ronde (scoreblokje) ---------- */
-.rs {
-  display: grid;
-  gap: var(--gap);
+.rs-sheet {
+  padding: 0;
+  overflow: hidden;
 }
 
-.rs-wrap {
-  padding: 0;
+.rs-sheet.editing {
+  border-color: var(--leader);
+  box-shadow: inset 0 0 0 2px var(--leader);
+}
+
+.rs-scroll {
   overflow-x: auto;
 }
 
 .rs-table {
   width: 100%;
+  /* Spelerkolommen even breed, inhoud gecentreerd */
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -671,29 +677,37 @@ details.log ol {
 
 .rs-table th,
 .rs-table td {
-  padding: 8px 12px;
-  text-align: right;
-  min-width: 84px;
+  padding: 10px 12px;
+  text-align: center;
+  min-width: 96px;
 }
 
-/* Rondenummer links, blijft staan bij zijwaarts scrollen */
+/* Kolom met rondenummers: smal, blijft staan bij zijwaarts scrollen */
 .rs-table tbody th,
+.rs-table tfoot th,
 .rs-corner {
   position: sticky;
   left: 0;
   z-index: 1;
-  min-width: 52px;
-  width: 52px;
+  width: 64px;
+  min-width: 64px;
   text-align: left;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
   background: var(--surface);
 }
 
-/* Kolomkop per speler */
+/* Lijntjes tussen de spelers, zoals op een scoreblokje */
+.rs-table td + td,
+.rs-table th.rs-player + th.rs-player {
+  border-left: 1px dashed var(--border);
+}
+
+/* ---- Kolomkop per speler ---- */
 .rs-player {
   vertical-align: bottom;
+  padding-top: 16px !important;
   border-bottom: 2px solid var(--border);
   background: var(--surface);
 }
@@ -704,7 +718,7 @@ details.log ol {
 
 .rs-name {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.05rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -712,17 +726,19 @@ details.log ol {
 
 .rs-player .goal-badge {
   display: inline-block;
-  margin: 4px 0;
+  margin: 6px auto 0;
 }
 
 .rs-total {
-  font-size: 2rem;
+  font-size: 2.4rem;
   font-weight: 800;
   line-height: 1.1;
+  margin-top: 4px;
 }
 
 .rs-player .progress {
-  margin-top: 6px;
+  margin: 8px auto 0;
+  max-width: 140px;
 }
 
 .rs-player.leader {
@@ -730,17 +746,17 @@ details.log ol {
 }
 
 .rs-player.place-1 {
-  background: linear-gradient(160deg, #fff6d1, #f3cf6a);
+  background: linear-gradient(170deg, #fff6d1, #f3cf6a);
   color: #231d10;
 }
 
 .rs-player.place-2 {
-  background: linear-gradient(160deg, #ffffff, #d5d9df);
+  background: linear-gradient(170deg, #ffffff, #d5d9df);
   color: #231d10;
 }
 
 .rs-player.place-3 {
-  background: linear-gradient(160deg, #fde6d2, #e3a676);
+  background: linear-gradient(170deg, #fde6d2, #e3a676);
   color: #231d10;
 }
 
@@ -748,30 +764,35 @@ details.log ol {
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
 }
 
-/* Ronderegels: + punten, streep, nieuwe stand */
+/* ---- Ronderegels: + punten, streep, nieuwe stand ---- */
 .rs-round {
   cursor: pointer;
 }
 
-.rs-round:nth-child(even) td,
-.rs-round:nth-child(even) th {
-  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+.rs-round:nth-child(even) > * {
+  background: color-mix(in srgb, var(--surface-2) 40%, var(--surface));
 }
 
-.rs-round.editing td,
-.rs-round.editing th {
-  background: color-mix(in srgb, var(--leader) 22%, var(--surface));
+.rs-round:hover > * {
+  background: color-mix(in srgb, var(--leader) 10%, var(--surface));
+}
+
+.rs-round.editing > * {
+  background: color-mix(in srgb, var(--leader) 24%, var(--surface));
 }
 
 .rs-table td > span {
   display: block;
+  margin: 0 auto;
 }
 
 .rs-delta {
+  width: max-content;
+  min-width: 4ch;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent);
-  padding-bottom: 2px;
+  text-align: right;
 }
 
 .rs-delta.neg {
@@ -784,13 +805,14 @@ details.log ol {
 
 /* De streep onder de punten, zoals op papier */
 .rs-run {
-  font-weight: 700;
-  font-size: 1.15rem;
-  border-top: 2px solid currentColor;
-  padding-top: 2px;
-  margin-left: auto;
   width: max-content;
-  min-width: 3ch;
+  min-width: 4ch;
+  margin-top: 2px !important;
+  padding-top: 2px;
+  border-top: 2px solid currentColor;
+  font-weight: 800;
+  font-size: 1.2rem;
+  text-align: right;
 }
 
 .rs-start .rs-run {
@@ -799,56 +821,325 @@ details.log ol {
   font-weight: 600;
 }
 
-/* Invoer van een ronde */
-.rs-entry h2 {
-  margin-top: 0;
+/* ---- Invoerregel onderaan ---- */
+.rs-table .rs-entry-row > * {
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border-top: 2px solid var(--border);
+  vertical-align: top;
 }
 
-.rs-entry.editing {
-  border-color: var(--leader);
-  box-shadow: inset 0 0 0 2px var(--leader);
+.rs-entry-row th {
+  padding-top: 18px;
 }
 
-.rs-fields {
+.rs-entry-label {
+  display: block;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.rs-entry-row small {
+  font-weight: 500;
+  font-size: 0.7rem;
+}
+
+.rs-sheet.editing .rs-table .rs-entry-row > * {
+  background: color-mix(in srgb, var(--leader) 18%, var(--surface));
+}
+
+.rs-table .rs-input {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.rs-field {
-  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
   gap: 4px;
-}
-
-.rs-field-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rs-input {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 6px;
+  max-width: 170px;
 }
 
 .rs-input input {
+  min-width: 0;
+  padding: 8px 6px;
   text-align: center;
   font-size: 1.2rem;
   font-weight: 700;
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.rs-input input.neg {
+  color: var(--danger);
 }
 
 .rs-flip {
+  min-width: 0;
   padding: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
+  color: var(--muted);
 }
 
+/* Live voorbeeld van de nieuwe stand, met dezelfde streep als erboven */
 .rs-preview {
-  font-size: 0.85rem;
+  width: max-content;
+  min-width: 4ch;
+  margin-top: 8px !important;
+  padding-top: 2px;
+  border-top: 2px dashed var(--muted);
+  font-weight: 800;
+  font-size: 1.2rem;
   color: var(--muted);
-  font-variant-numeric: tabular-nums;
+}
+
+.rs-preview.pending {
+  opacity: 0.6;
+}
+
+.rs-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.rs-actions button {
+  flex: 1;
+}
+
+.rs-actions .btn-primary {
+  flex: 2;
+}
+
+@media (max-width: 520px) {
+  .rs-table th,
+  .rs-table td {
+    padding: 8px 6px;
+    min-width: 88px;
+  }
+
+  .rs-table tbody th,
+  .rs-table tfoot th,
+  .rs-corner {
+    width: 44px;
+    min-width: 44px;
+    padding-left: 10px;
+  }
+
+  .rs-total {
+    font-size: 1.9rem;
+  }
+
+  .rs-table .rs-input {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+}
+
+/* ---------- Spelregels (?-knop + paneel) ---------- */
+.rules-button {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.rules-dialog {
+  width: min(640px, calc(100vw - 24px));
+  max-height: min(86vh, 900px);
+  padding: 0;
+  border: none;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.35);
+}
+
+.rules-dialog::backdrop {
+  background: rgb(10 10 20 / 0.5);
+}
+
+.rules-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.rules-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.rules-body {
+  padding: 8px 20px 20px;
+  line-height: 1.5;
+}
+
+.rules-body h3 {
+  margin: 18px 0 6px;
+  font-size: 1rem;
+}
+
+.rules-body p {
+  margin: 0 0 8px;
+}
+
+.rules-body ul {
+  margin: 0 0 8px;
+  padding-left: 1.2em;
+}
+
+.rules-body li {
+  margin-bottom: 4px;
+}
+
+.rules-intro {
+  color: var(--muted);
+}
+
+/* ---------- Dobbelstenen (inklapbaar paneel) ---------- */
+.dice-panel {
+  margin-top: var(--gap);
+}
+
+.dice-panel summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: -6px -4px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+}
+
+/* Standaard driehoekje weg; eigen pijltje rechts dat meedraait */
+.dice-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.dice-panel summary::after {
+  content: '';
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 50%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      center / 20px no-repeat,
+    var(--surface-2);
+  transition: transform 0.2s;
+}
+
+.dice-panel[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.dice-panel summary:hover {
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+}
+
+.dice-panel summary small {
+  font-weight: 500;
+}
+
+.dice-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.dice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.die {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--die);
+  color: var(--ink);
+  border: 2px solid rgb(0 0 0 / 0.12);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.18);
+  font-weight: 800;
+  font-size: 1.6rem;
+}
+
+.die.pips {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.die.pips i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.die.pips i.on {
+  background: var(--ink);
+}
+
+/* Kleurdobbelsteen: gekleurd vlak op de steen */
+.die.color span {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background: var(--face);
+  font-size: 0;
+}
+
+.die.blank {
+  opacity: 0.5;
+}
+
+.die.out {
+  opacity: 0.2;
+}
+
+.die.rolling {
+  animation: die-wobble 0.12s infinite alternate;
+}
+
+@keyframes die-wobble {
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(8deg); }
+}
+
+.dice-hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.dice-describe p {
+  margin: 0 0 6px;
+}
+
+.dice-describe ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .die.rolling {
+    animation: none;
+  }
 }

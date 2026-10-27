@@ -17,13 +17,6 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
-    id: 'darts',
-    name: 'Darts',
-    description: '501 / 301 aftellen met bust-controle.',
-    icon: '🎯',
-    status: 'binnenkort',
-  },
-  {
     id: 'sushi-go',
     name: 'Sushi Go!',
     description: 'Kaarten tellen per ronde; maki, pudding en sets worden uitgerekend.',
@@ -31,11 +24,18 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
-    id: 'yahtzee',
-    name: 'Yahtzee',
-    description: 'Compleet scoreblad met automatische bonus en totalen.',
+    id: 'qwixx',
+    name: 'Qwixx',
+    description: 'Eigen blad per speler: kruisen, rijen afsluiten, punten rekenen. Met spelregels en dobbelstenen.',
     icon: '🎲',
-    status: 'binnenkort',
+    status: 'beschikbaar',
+  },
+  {
+    id: 'ganz-schon-clever',
+    name: 'Ganz schön clever',
+    description: 'Neon-blad per speler: bonussen, vossen en kettingreacties worden voor je bijgehouden.',
+    icon: '🦊',
+    status: 'beschikbaar',
   },
   {
     id: 'keer-op-keer',

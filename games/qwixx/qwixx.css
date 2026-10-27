@@ -1,0 +1,275 @@
+/* Qwixx — vier gekleurde rijen, witte vakjes, kruisjes zoals met een stift */
+
+.wrap.qx-wide {
+  max-width: 1100px;
+}
+
+.qx .topbar h1 .muted {
+  font-weight: 400;
+}
+
+/* ---------- Blad ---------- */
+.qx-sheet {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.qx-row {
+  display: grid;
+  grid-template-columns: 1fr 64px;
+  align-items: center;
+  gap: 8px;
+  min-width: 620px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--row);
+}
+
+.qx-row.is-locked {
+  filter: saturate(0.55);
+}
+
+.qx-cells {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.qx-cell,
+.qx-lock {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 9px;
+  background: var(--row-light);
+  color: var(--row);
+  font-weight: 800;
+  font-size: clamp(1rem, 2.4vw, 1.6rem);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.08);
+  display: grid;
+  place-items: center;
+}
+
+.qx-cell small {
+  position: absolute;
+  bottom: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* Kruisje, als met een zwarte stift */
+.qx-cell.crossed::before,
+.qx-cell.crossed::after {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 50%;
+  height: 12%;
+  min-height: 3px;
+  margin-top: -6%;
+  border-radius: 4px;
+  background: #1b1a17;
+  transform: rotate(45deg);
+}
+
+.qx-cell.crossed::after {
+  transform: rotate(-45deg);
+}
+
+.qx-cell.crossed .qx-num {
+  opacity: 0.45;
+}
+
+/* Overgeslagen of afgesloten: kan niet meer */
+.qx-cell.skipped {
+  opacity: 0.35;
+}
+
+/* Laatste getal: pas na 5 kruisjes */
+.qx-cell.needs-more {
+  opacity: 0.7;
+  background: repeating-linear-gradient(-45deg, var(--row-light) 0 6px, color-mix(in srgb, var(--row-light) 80%, var(--row)) 6px 9px);
+}
+
+.qx-lock {
+  border-radius: 50%;
+  font-size: clamp(1rem, 2.2vw, 1.4rem);
+  background: rgb(255 255 255 / 0.25);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.7);
+}
+
+.qx-lock.self {
+  background: #fff;
+  box-shadow: 0 0 0 3px #1b1a17;
+}
+
+.qx-lock.other {
+  background: rgb(0 0 0 / 0.25);
+}
+
+.qx-row-score {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 48px;
+  border-radius: 9px;
+  background: #fff;
+  color: #1b1a17;
+  line-height: 1.05;
+}
+
+.qx-row-score small {
+  font-size: 0.7rem;
+  color: #6b665d;
+}
+
+.qx-row-score strong {
+  font-size: 1.4rem;
+}
+
+.qx-cell.shake {
+  animation: qx-shake 0.35s;
+}
+
+@keyframes qx-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ---------- Misworpen en totaal ---------- */
+.qx-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-top: var(--gap);
+}
+
+.qx-penalties {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qx-label {
+  display: grid;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.qx-label small {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.qx-penalty-boxes {
+  display: flex;
+  gap: 6px;
+}
+
+.qx-penalty {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--danger);
+}
+
+.qx-penalty.used {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+}
+
+.qx-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.qx-op {
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.qx-sum-box {
+  min-width: 46px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 3px solid var(--row, var(--border));
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.qx-sum-box.penalty {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.qx-sum-box.total {
+  min-width: 70px;
+  border-color: var(--text);
+  font-size: 1.5rem;
+}
+
+/* ---------- Dobbelstenen: sommen ---------- */
+.qx-sums p {
+  margin: 0 0 6px;
+}
+
+.qx-sums ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qx-sums li b {
+  color: var(--row);
+}
+
+/* Alleen op een smal (staand) scherm */
+.qx-tip {
+  display: none;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 520px) {
+  .qx-tip {
+    display: block;
+  }
+
+  .qx-row {
+    min-width: 540px;
+    grid-template-columns: 1fr 52px;
+  }
+
+  .qx-sum-box {
+    min-width: 40px;
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qx-cell.shake {
+    animation: none;
+  }
+}

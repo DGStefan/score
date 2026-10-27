@@ -44,6 +44,10 @@ interface CounterState extends Settings {
   rounds?: number[][];
 }
 
+/** Pijltje terug; als SVG zodat het er op elk apparaat hetzelfde uitziet. */
+const UNDO_ICON =
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
+
 const store = sessionStore<CounterState>(GAME_ID, VERSION);
 const SETTINGS_KEY = `spel:${GAME_ID}:instellingen`;
 const DEFAULT_SETTINGS: Settings = {
@@ -520,8 +524,8 @@ function playView(s: CounterState): HTMLElement {
               update({ ...s, moves: s.moves.slice(0, -1) });
             }
           },
+          innerHTML: UNDO_ICON,
         },
-        '↶',
       ),
       h('button', { class: 'btn-danger', onclick: () => clearGame() }, 'Wissen'),
       h('button', { class: 'btn-primary', onclick: () => finishGame(s) }, 'Afronden'),
@@ -590,7 +594,7 @@ function roundView(s: CounterState, leaders: string[], ranking: Map<number, numb
           editingRound = r;
           roundDraft = round.map((v) => String(v));
           render();
-          app.querySelector<HTMLInputElement>('.rs-entry input')?.focus();
+          app.querySelector<HTMLInputElement>('.rs-entry-row input')?.focus();
         },
       },
       h('th', { scope: 'row' }, `R${r + 1}`),
@@ -605,17 +609,32 @@ function roundView(s: CounterState, leaders: string[], ranking: Map<number, numb
     ),
   );
 
-  const table = h(
+  const entry = entryParts(s);
+  const sheet = h(
     'div',
-    { class: 'card rs-wrap' },
-    h('table', { class: 'rs-table' }, h('thead', null, head), h('tbody', null, startRow, ...roundRows)),
+    { class: `card rs-sheet${editingRound !== null ? ' editing' : ''}` },
+    h(
+      'div',
+      { class: 'rs-scroll' },
+      h(
+        'table',
+        { class: 'rs-table', style: `--players:${s.players.length}` },
+        h('thead', null, head),
+        h('tbody', null, startRow, ...roundRows),
+        h('tfoot', null, entry.row),
+      ),
+    ),
+    entry.actions,
   );
 
-  return h('div', { class: 'rs' }, table, entryCard(s));
+  return h('div', { class: 'rs' }, sheet);
 }
 
-/** Invoer voor een nieuwe ronde, of voor het aanpassen van een bestaande. */
-function entryCard(s: CounterState): HTMLElement {
+/**
+ * Invoerregel onderaan het blokje (zelfde kolommen als de spelers),
+ * voor een nieuwe ronde of voor het aanpassen van een bestaande.
+ */
+function entryParts(s: CounterState): { row: HTMLTableRowElement; actions: HTMLElement } {
   const rounds = roundsOf(s);
   const editing = editingRound;
   const roundNr = editing === null ? rounds.length + 1 : editing + 1;
@@ -625,27 +644,29 @@ function entryCard(s: CounterState): HTMLElement {
   const running = runningTotals(s);
   const before = editing === null ? scores(s) : editing === 0 ? s.players.map(() => s.start) : (running[editing - 1] ?? []);
 
-  const fields = s.players.map((name, p) => {
+  const cells = s.players.map((name, p) => {
     const preview = h('span', { class: 'rs-preview' });
     const input = h('input', {
       type: 'text',
       inputMode: 'decimal',
       autocomplete: 'off',
-      placeholder: '0',
+      placeholder: '+0',
       value: roundDraft[p] ?? '',
       'aria-label': `Punten ronde ${roundNr} voor ${name}`,
       enterkeyhint: p === s.players.length - 1 ? 'done' : 'next',
     });
     const updatePreview = (): void => {
       roundDraft[p] = input.value;
-      const pts = parsePoints(input.value) ?? 0;
-      preview.textContent = `= ${formatScore((before[p] ?? s.start) + pts)}`;
+      const pts = parsePoints(input.value);
+      input.classList.toggle('neg', pts !== null && pts < 0);
+      preview.textContent = formatScore((before[p] ?? s.start) + (pts ?? 0));
+      preview.classList.toggle('pending', pts === null);
     };
     input.addEventListener('input', updatePreview);
     input.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
       e.preventDefault();
-      const nextInput = app.querySelectorAll<HTMLInputElement>('.rs-entry input')[p + 1];
+      const nextInput = app.querySelectorAll<HTMLInputElement>('.rs-entry-row input')[p + 1];
       if (nextInput) nextInput.focus();
       else saveRound(s);
     });
@@ -666,34 +687,41 @@ function entryCard(s: CounterState): HTMLElement {
       },
       '±',
     );
-    return h('label', { class: 'rs-field' }, h('span', { class: 'rs-field-name' }, name), h('span', { class: 'rs-input' }, flip, input), preview);
+    return h('td', null, h('span', { class: 'rs-input' }, flip, input), preview);
   });
 
-  return h(
+  const row = h(
+    'tr',
+    { class: 'rs-entry-row' },
+    h('th', { scope: 'row' }, h('span', { class: 'rs-entry-label' }, `R${roundNr}`), editing !== null ? h('small', null, 'aanpassen') : null),
+    cells,
+  );
+
+  const actions = h(
     'div',
-    { class: `card rs-entry${editing !== null ? ' editing' : ''}` },
-    h('h2', null, editing === null ? `Ronde ${roundNr}` : `Ronde ${roundNr} aanpassen`),
-    h('div', { class: 'rs-fields' }, fields),
-    h(
-      'div',
-      { class: 'row stretch' },
-      editing !== null
-        ? h(
-            'button',
-            {
-              type: 'button',
-              onclick: () => {
-                editingRound = null;
-                roundDraft = [];
-                render();
-              },
+    { class: 'rs-actions' },
+    editing !== null
+      ? h(
+          'button',
+          {
+            type: 'button',
+            onclick: () => {
+              editingRound = null;
+              roundDraft = [];
+              render();
             },
-            'Annuleren',
-          )
-        : null,
-      h('button', { type: 'button', class: 'btn-primary', onclick: () => saveRound(s) }, editing === null ? `Ronde ${roundNr} opslaan` : 'Wijziging opslaan'),
+          },
+          'Annuleren',
+        )
+      : null,
+    h(
+      'button',
+      { type: 'button', class: 'btn-primary', onclick: () => saveRound(s) },
+      editing === null ? `Ronde ${roundNr} opslaan` : `Ronde ${roundNr} bijwerken`,
     ),
   );
+
+  return { row, actions };
 }
 
 function saveRound(s: CounterState): void {

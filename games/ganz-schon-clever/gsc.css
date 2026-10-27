@@ -1,0 +1,640 @@
+/*
+ * Ganz schön clever — opgebouwd als het papieren blad (staand, zwart, neon-randen).
+ * Alle maten in cqw (procent van de bladbreedte), zodat het blad als geheel meeschaalt
+ * en op telefoon én tablet in één keer op het scherm past.
+ */
+
+.wrap.gsc-wide {
+  max-width: 1150px;
+}
+
+.gsc .topbar h1 .muted {
+  font-weight: 400;
+}
+
+/* Breedte van het blad: zo breed als past, maar nooit hoger dan het scherm */
+.gsc-sheet-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.gsc-sheet {
+  --ink: #141218;
+  --yellow: #f7c41f;
+  --blue: #2f9ff3;
+  --green: #5bd04a;
+  --orange: #ff8a1f;
+  --purple: #b16cf0;
+  container-type: inline-size;
+  width: min(100%, calc((100dvh - 170px) * 0.7), 620px);
+  display: grid;
+  gap: 1.8cqw;
+  padding: 2.4cqw;
+  border-radius: 3cqw;
+  background: #000;
+  color: #fff;
+  font-style: italic;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  user-select: none;
+}
+
+/* ---------- Algemeen: vakje met kruisje ---------- */
+.s-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 1.6cqw;
+  background: #fff;
+  color: var(--ink);
+  font: italic 800 4.4cqw/1 system-ui, sans-serif;
+  box-shadow: inset 0 -0.5cqw 0 rgb(0 0 0 / 0.12);
+}
+
+.s-cell.crossed::before,
+.s-cell.crossed::after {
+  content: '';
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 50%;
+  height: 14%;
+  margin-top: -7%;
+  border-radius: 1cqw;
+  background: var(--ink);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+.s-cell.crossed::after {
+  transform: rotate(-45deg);
+}
+
+.s-cell.preset {
+  background: #fff;
+}
+
+.s-cell.next {
+  box-shadow: 0 0 0 0.6cqw var(--area), 0 0 2.5cqw var(--area);
+}
+
+.s-cell.shake {
+  animation: s-shake 0.35s;
+}
+
+@keyframes s-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ---------- Gebieden met neon-rand ---------- */
+.s-area {
+  --area: #fff;
+  position: relative;
+  min-width: 0;
+  padding: 1.8cqw;
+  border-radius: 2.6cqw;
+  border: 0.55cqw solid var(--area);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--area) 38%, #000), color-mix(in srgb, var(--area) 14%, #000) 60%);
+  box-shadow:
+    0 0 1.6cqw color-mix(in srgb, var(--area) 75%, transparent),
+    inset 0 0 1.6cqw color-mix(in srgb, var(--area) 45%, transparent);
+}
+
+.s-area.yellow { --area: var(--yellow); }
+.s-area.blue { --area: var(--blue); }
+.s-area.green { --area: var(--green); }
+.s-area.orange { --area: var(--orange); }
+.s-area.purple { --area: var(--purple); }
+
+.s-area.yellow .s-cell { color: #1b1b1b; }
+.s-area.blue .s-cell { color: var(--blue); }
+.s-area.green .s-cell { color: var(--green); }
+
+/* ---------- Bonus-plaatjes ---------- */
+.gsc-tag {
+  display: inline-grid;
+  place-items: center;
+  min-width: 4.4cqw;
+  height: 4.4cqw;
+  padding: 0 0.6cqw;
+  border-radius: 1cqw;
+  border: 0.35cqw solid #fff;
+  background: #111;
+  color: #fff;
+  font: italic 800 2.6cqw/1 system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+/* Verdiende bonus: witte gloed eromheen */
+.gsc-tag.lit {
+  box-shadow: 0 0 0 0.35cqw #fff, 0 0 1.8cqw 0.4cqw rgb(255 255 255 / 0.85);
+}
+
+.gsc-tag.fox {
+  border: none;
+  background: transparent;
+  font-size: 4cqw;
+  font-style: normal;
+}
+
+.gsc-tag.yellow { background: var(--yellow, #f7c41f); color: #141218; }
+.gsc-tag.blue { background: var(--blue, #2f9ff3); }
+.gsc-tag.green { background: var(--green, #5bd04a); color: #141218; }
+.gsc-tag.orange { background: var(--orange, #ff8a1f); }
+.gsc-tag.purple { background: var(--purple, #b16cf0); }
+
+/* Gekartelde "ster" met punten, zoals op het blad */
+.s-burst {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  width: 7cqw;
+  clip-path: polygon(50% 0%, 60.4% 11.4%, 75% 6.7%, 78.3% 21.7%, 93.3% 25%, 88.6% 39.6%, 100% 50%, 88.6% 60.4%, 93.3% 75%, 78.3% 78.3%, 75% 93.3%, 60.4% 88.6%, 50% 100%, 39.6% 88.6%, 25% 93.3%, 21.7% 78.3%, 6.7% 75%, 11.4% 60.4%, 0% 50%, 11.4% 39.6%, 6.7% 25%, 21.7% 21.7%, 25% 6.7%, 39.6% 11.4%);
+  font-size: 2.7cqw;
+  color: #fff;
+  background: color-mix(in srgb, var(--c) 45%, #000);
+}
+
+.s-burst.small {
+  width: 5.6cqw;
+  font-size: 2.1cqw;
+}
+
+.s-burst.yellow { --c: var(--yellow); color: #141218; }
+.s-burst.blue { --c: var(--blue); }
+.s-burst.green { --c: var(--green); color: #141218; }
+
+.s-burst.lit {
+  background: var(--c);
+  filter: drop-shadow(0 0 1cqw var(--c));
+}
+
+.s-burst.now {
+  outline: 0.4cqw solid #fff;
+}
+
+/* ---------- Bovenkant ---------- */
+.s-top {
+  display: grid;
+  grid-template-columns: 12.5cqw 1fr;
+  gap: 1.8cqw;
+  align-items: stretch;
+}
+
+.s-note {
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 2cqw;
+  border: 0.6cqw solid #ddd;
+  background: #fff;
+  color: var(--ink);
+  font: italic 800 6cqw/1 system-ui, sans-serif;
+  box-shadow: 0 0 1.4cqw rgb(255 255 255 / 0.5), inset 0 0 0 0.5cqw #fff, inset 0 0 0 0.9cqw #bbb;
+}
+
+.s-rounds {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1.6cqw;
+}
+
+.s-round {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.8cqw;
+  min-width: 0;
+  min-height: 0;
+  padding: 1cqw 0;
+  border-radius: 2cqw;
+  border: 0.5cqw solid #cfcfcf;
+  background: linear-gradient(180deg, #4a4a4a, #1a1a1a);
+  color: #fff;
+  box-shadow: 0 0 1.2cqw rgb(255 255 255 / 0.35);
+}
+
+.s-round-nr {
+  display: grid;
+  place-items: center;
+  width: 6.2cqw;
+  height: 6.2cqw;
+  border-radius: 1.2cqw;
+  background: #fff;
+  color: var(--ink);
+  font: italic 800 4cqw/1 system-ui, sans-serif;
+}
+
+.s-round.done .s-round-nr {
+  position: relative;
+  color: #999;
+}
+
+.s-round.done .s-round-nr::after {
+  content: '✕';
+  position: absolute;
+  font-style: normal;
+  font-size: 5cqw;
+  color: var(--ink);
+}
+
+.s-round.current {
+  border-color: #fff;
+  box-shadow: 0 0 2cqw #fff;
+}
+
+.s-round .gsc-tag {
+  min-width: 4cqw;
+  height: 4cqw;
+  font-size: 2.2cqw;
+}
+
+.s-players {
+  font-size: 1.8cqw;
+  font-style: normal;
+  line-height: 4cqw;
+  letter-spacing: -0.4cqw;
+  filter: grayscale(1) brightness(2);
+}
+
+.s-track {
+  display: grid;
+  grid-template-columns: 7cqw repeat(7, 1fr);
+  align-items: center;
+  gap: 1.6cqw;
+  padding: 1.2cqw 2cqw;
+  border-radius: 3cqw;
+  border: 0.5cqw solid #cfcfcf;
+  background: linear-gradient(180deg, #5a5a5a, #232323);
+  box-shadow: 0 0 1.2cqw rgb(255 255 255 / 0.3);
+}
+
+.s-track-icon {
+  display: grid;
+  place-items: center;
+  width: 6.5cqw;
+  height: 6.5cqw;
+  border-radius: 1.4cqw;
+  border: 0.4cqw solid #fff;
+  background: #000;
+  color: #fff;
+  font: italic 800 3.4cqw/1 system-ui, sans-serif;
+}
+
+.s-dot {
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 0.5cqw solid rgb(255 255 255 / 0.9);
+  background: #b9b9b9;
+}
+
+.s-dot.earned {
+  background: #fff;
+  box-shadow: 0 0 1.4cqw #fff;
+}
+
+.s-dot.used {
+  position: relative;
+  background: #fff;
+  box-shadow: none;
+}
+
+.s-dot.used::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font: normal 900 4cqw/1 system-ui, sans-serif;
+}
+
+.s-dot:disabled {
+  opacity: 1;
+}
+
+/* ---------- Geel + blauw naast elkaar (zoals op het blad) ---------- */
+.s-mid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.8cqw;
+}
+
+.s-ygrid,
+.s-bgrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 7cqw;
+  gap: 1.4cqw;
+  align-items: center;
+}
+
+.s-arrow {
+  display: flex;
+  align-items: center;
+  gap: 0.3cqw;
+  font-size: 2.4cqw;
+  color: color-mix(in srgb, var(--area) 60%, #fff);
+}
+
+.s-down {
+  display: grid;
+  justify-items: center;
+  gap: 0.4cqw;
+  color: color-mix(in srgb, var(--area) 60%, #fff);
+}
+
+.s-down i {
+  font-size: 2.4cqw;
+  line-height: 1;
+}
+
+.s-down.diag {
+  align-self: start;
+}
+
+/* Blauw: puntenschaal bovenin */
+.s-scale {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  margin-bottom: 1.4cqw;
+  padding-bottom: 1cqw;
+  border-bottom: 0.3cqw solid color-mix(in srgb, var(--blue) 60%, transparent);
+}
+
+.s-scale-col {
+  display: grid;
+  justify-items: center;
+  gap: 0.3cqw;
+}
+
+.s-scale-col .s-burst.small {
+  width: 3.9cqw;
+  font-size: 1.6cqw;
+}
+
+.s-scale-col small {
+  font-size: 1.6cqw;
+  color: color-mix(in srgb, var(--blue) 50%, #fff);
+}
+
+.s-scale-col.now small {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.s-bicon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4cqw;
+  font-size: 2.6cqw;
+}
+
+.s-bicon i {
+  width: 3cqw;
+  height: 3cqw;
+  border-radius: 0.6cqw;
+}
+
+.s-bicon .b { background: var(--blue); }
+.s-bicon .w { background: #fff; }
+
+/* ---------- Rijen: groen, oranje, paars ---------- */
+.s-lane {
+  padding: 1.4cqw 1.6cqw 2.6cqw;
+}
+
+.s-row {
+  display: grid;
+  grid-template-columns: 5cqw repeat(11, 1fr);
+  gap: 1.2cqw;
+  align-items: center;
+}
+
+.s-row-top {
+  margin-bottom: 1cqw;
+  justify-items: center;
+}
+
+.s-start {
+  display: grid;
+  place-items: center;
+  height: 5cqw;
+  border-radius: 1.2cqw;
+  background: color-mix(in srgb, var(--area) 70%, #fff);
+  color: #fff;
+  font-size: 3cqw;
+  font-style: normal;
+  box-shadow: 0 0 1.2cqw var(--area);
+}
+
+.s-lane .s-cell {
+  aspect-ratio: 1 / 1.05;
+  font-size: 2.6cqw;
+}
+
+.s-hint {
+  color: color-mix(in srgb, var(--area) 85%, #000);
+}
+
+.s-lane.orange .s-hint {
+  color: color-mix(in srgb, var(--orange) 55%, #fff);
+}
+
+.s-val {
+  font-size: 4.2cqw;
+  color: var(--ink);
+}
+
+/* Bonus onder het vakje, half overlappend zoals op het blad */
+.s-under {
+  position: absolute;
+  left: 50%;
+  bottom: -2.4cqw;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.s-under .gsc-tag {
+  min-width: 3.6cqw;
+  height: 3.6cqw;
+  font-size: 2cqw;
+}
+
+.s-under .gsc-tag.fox {
+  font-size: 3.4cqw;
+}
+
+/* Paars: "<" tussen de vakjes, in een rond bolletje dat over de vakjes heen ligt */
+.s-lt {
+  position: absolute;
+  left: -0.6cqw;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 3.6cqw;
+  height: 3.6cqw;
+  border-radius: 50%;
+  border: 0.4cqw solid var(--purple);
+  background: #fff;
+  color: var(--purple);
+  font: normal 900 2.6cqw/1 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  box-shadow: 0 0 0.8cqw rgb(0 0 0 / 0.35);
+}
+
+/* ---------- Openstaande bonussen ---------- */
+.gsc-pending {
+  display: grid;
+  gap: 6px;
+  margin: 0 auto var(--gap);
+  max-width: 620px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: #15131a;
+  color: #fff;
+  border: 2px solid #f7c41f;
+  box-shadow: 0 0 14px rgb(247 196 31 / 0.45);
+}
+
+.gsc-pending-list {
+  display: grid;
+  gap: 6px;
+}
+
+.gsc-pending-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.gsc-pending-item .gsc-tag {
+  min-width: 30px;
+  height: 30px;
+  font-size: 0.9rem;
+}
+
+.gsc-pending-text {
+  display: grid;
+  line-height: 1.25;
+}
+
+.gsc-pending-text small {
+  opacity: 0.7;
+}
+
+.gsc-pending-item button {
+  min-height: 38px;
+}
+
+/* ---------- Score ---------- */
+.gsc-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  max-width: 620px;
+  margin: var(--gap) auto 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: #000;
+  color: #fff;
+}
+
+.gsc-score .op {
+  font-weight: 900;
+  opacity: 0.6;
+}
+
+.gsc-score-box {
+  display: grid;
+  justify-items: center;
+  min-width: 52px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  border: 2px solid var(--area);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--area) 50%, transparent);
+}
+
+.gsc-score-box small {
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.gsc-score-box b {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gsc-score-box.total b {
+  font-size: 1.5rem;
+}
+
+.gsc .dice-panel {
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- Getal kiezen ---------- */
+.gsc-picker {
+  width: min(340px, calc(100vw - 24px));
+  padding: 18px;
+  border: none;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+}
+
+.gsc-picker::backdrop {
+  background: rgb(10 10 20 / 0.55);
+}
+
+.gsc-picker h3 {
+  margin: 0 0 14px;
+}
+
+.gsc-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.gsc-picker-grid button {
+  min-height: 60px;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-cell.shake {
+    animation: none;
+  }
+}
+
+/* Voorgedrukte kruisjes niet doorzichtig maken (knoppen zijn uitgeschakeld) */
+.s-cell:disabled {
+  opacity: 1;
+}
+
+/* Knoppenbalk onderin altijd boven de bonus-plaatjes */
+.gsc .actions {
+  position: sticky;
+  z-index: 5;
+}

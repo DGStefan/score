@@ -1,4 +1,5 @@
 import { confetti } from '@shared/confetti';
+import { dicePanel, type DieFace, type DieSpec } from '@shared/dice';
 import { h, mount, toast } from '@shared/dom';
 import { addHistory } from '@shared/history';
 import { initPage } from '@shared/page';
@@ -348,6 +349,7 @@ function playView(initial: KokState, layout: Layout): HTMLElement {
       jokerStrip,
       help,
     ),
+    diceCard(layout),
     h(
       'div',
       { class: 'actions row stretch' },
@@ -355,6 +357,27 @@ function playView(initial: KokState, layout: Layout): HTMLElement {
       h('button', { class: 'btn-primary', onclick: () => finishGame(s, layout) }, 'Afronden'),
     ),
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Digitale dobbelstenen (optioneel, standaard ingeklapt)              */
+/* ------------------------------------------------------------------ */
+
+/** 3 witte kleurstenen (5 kleuren + ?) en 3 zwarte cijferstenen (1–5 + ?), zoals in het echte spel. */
+function diceCard(layout: Layout): HTMLElement {
+  const colors = colorsFor(layout);
+  const joker: DieFace = { joker: true, label: '?' };
+  const colorFaces: DieFace[] = [...COLOR_ORDER.map((c) => ({ color: colors[c].fill, label: colors[c].name })), joker];
+  const numberFaces: DieFace[] = [...[1, 2, 3, 4, 5].map((n) => ({ label: String(n) })), joker];
+  const dice: DieSpec[] = [
+    ...[1, 2, 3].map((i) => ({ id: `k${i}`, name: 'Kleur', bg: '#ffffff', ink: '#1f1d1a', faces: colorFaces })),
+    ...[1, 2, 3].map((i) => ({ id: `c${i}`, name: 'Cijfer', bg: '#1f1d1a', ink: '#ffffff', faces: numberFaces })),
+  ];
+  return dicePanel({
+    id: GAME_ID,
+    dice,
+    hint: 'De speler aan de beurt kiest eerst één kleur + één cijfer; daarna kiezen de anderen uit de overgebleven stenen. Vraagteken = joker (kost een !).',
+  });
 }
 
 /** Eerste-punten omcirkeld als jij hem vol hebt; doorgestreept als een ander je voor was. */
