@@ -1,0 +1,296 @@
+/* Keer op Keer 2 — bouwt voort op keer-op-keer.css; grijs bord zoals het blok */
+
+.kok2-board {
+  --board: #4a4f57;
+  --board-2: #33373e;
+}
+
+/* Raster: [5][bonus] A–O [letter] */
+.kok-sheet.kok2-sheet {
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  /* Smalle schermen: zijwaarts scrollen in plaats van piepkleine vakjes */
+  min-width: calc(18 * 34px);
+}
+
+@media (min-width: 700px) {
+  .kok-sheet.kok2-sheet {
+    min-width: 0;
+  }
+}
+
+.kok2-spacer {
+  display: block;
+}
+
+.kok2-rowpts,
+.kok2-rowbonus,
+.kok2-rowlabel {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: clamp(0.85rem, 1.7vw, 1.3rem);
+  position: relative;
+}
+
+.kok2-rowlabel {
+  margin: 0;
+}
+
+.kok2-rowbonus {
+  font-size: clamp(0.9rem, 1.9vw, 1.4rem);
+}
+
+.kok2-rowpts.won::before,
+.kok2-rowbonus.won::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 3px solid #1a9b5b;
+}
+
+.kok2-rowbonus.taken {
+  opacity: 0.55;
+}
+
+.kok2-rowbonus.taken::after {
+  content: '';
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 50%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--red);
+  transform: rotate(-35deg);
+}
+
+/* Gouden dobbelsteen in een vakje */
+.kok2-diecell {
+  position: absolute;
+  inset: 18%;
+  display: grid;
+  place-items: center;
+  font-size: clamp(0.8rem, 1.8vw, 1.3rem);
+  filter: sepia(1) saturate(2.2) hue-rotate(-12deg);
+  z-index: 0;
+}
+
+.kok-points .kok2-hdie {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 0.7em;
+  filter: sepia(1) saturate(2.2) hue-rotate(-12deg);
+}
+
+/* Bom: vakjes waar je nu vrij mag kruisen */
+.kok-cell.bomb-target {
+  outline: 2px dashed #fff;
+  outline-offset: -3px;
+}
+
+/* Hartwaarde per kolom */
+.kok2-heartlabel {
+  display: grid;
+  place-items: center;
+  font-size: clamp(0.8rem, 1.6vw, 1.2rem);
+}
+
+.kok2-colheart {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 8px;
+  background: var(--paper);
+  color: #d7263d;
+  font-weight: 900;
+  font-size: clamp(0.85rem, 1.7vw, 1.3rem);
+  position: relative;
+}
+
+.kok2-colheart:not(.filled)::before {
+  content: '♥';
+  color: #f3b9bf;
+}
+
+/* Onderstrook: jokers, harten, speciale dobbelstenen */
+.kok2-extras {
+  grid-area: jokers;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.kok2-extras .kok-joker-strip {
+  justify-self: auto;
+}
+
+.kok2-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+.kok2-hearts {
+  display: flex;
+  gap: 6px;
+}
+
+.kok2-heart {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 34px;
+  clip-path: path('M18 33 C 6 24, 0 17, 0 10 C 0 4, 5 0, 10 0 C 14 0, 17 3, 18 5 C 19 3, 22 0, 26 0 C 31 0, 36 4, 36 10 C 36 17, 30 24, 18 33 Z');
+  background: #f3b9bf;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding-bottom: 6px;
+}
+
+.kok2-heart.on {
+  background: #d7263d;
+}
+
+.kok2-die {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: transparent;
+  font-size: 1.45rem;
+  filter: grayscale(0.6) opacity(0.55);
+}
+
+.kok2-die span,
+.kok2-die {
+  line-height: 1;
+}
+
+.kok2-die.earned {
+  border-color: var(--paper-ink);
+  filter: sepia(1) saturate(2.2) hue-rotate(-12deg);
+}
+
+.kok2-die.used::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--red, #e2262f);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+}
+
+.kok2-die:disabled {
+  opacity: 1;
+}
+
+/* Meldingen boven het bord */
+.kok2-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--gap);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: #1f1d1a;
+  color: #fff;
+}
+
+.kok2-banner span {
+  flex: 1 1 260px;
+  font-weight: 600;
+}
+
+/* Keuze actie speciale dobbelsteen */
+.kok2-actions .rules-body {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.kok2-action {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  justify-content: start;
+  padding: 10px 12px;
+}
+
+.kok2-action-icon {
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.kok2-action span:last-child {
+  display: grid;
+}
+
+.kok2-action small {
+  color: var(--muted);
+}
+
+/* Liggend: blad iets breder (18 kolommen), meer hoogte voor de onderstrook */
+@media (min-width: 900px) and (orientation: landscape) {
+  .kok-board.kok2-board {
+    grid-template-columns: minmax(0, calc((100dvh - 430px) * 1.62)) 160px 190px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'sheet colors scores'
+      'jokers jokers scores';
+  }
+
+  /* Uitleg staat al in de spelregels; hier telt elke pixel hoogte */
+  .kok2-board .kok-help {
+    display: none;
+  }
+
+  .kok2-board .kok-scores {
+    align-self: start;
+  }
+}
+
+/* Telefoon: alles onder elkaar, het blad scrollt zijwaarts binnen zijn eigen vak */
+@media (max-width: 699px) {
+  .kok-board.kok2-board {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'sheet'
+      'colors'
+      'scores'
+      'jokers'
+      'help';
+  }
+
+  .kok2-board .kok-colors {
+    justify-content: start;
+  }
+}

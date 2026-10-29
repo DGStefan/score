@@ -51,7 +51,7 @@ export const DEFAULT_COLORS: Record<ColorKey, ColorInfo> = {
 
 export const COLOR_ORDER: ColorKey[] = ['g', 'y', 'b', 'r', 'o'];
 
-const LABELS = 'ABCDEFGHIJKLMNO'.split('');
+export const LABELS = 'ABCDEFGHIJKLMNO'.split('');
 
 /** Standaard kolompunten Keer op Keer (A t/m O). */
 const COLUMN_POINTS: [number, number][] = [

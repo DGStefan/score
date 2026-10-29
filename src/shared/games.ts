@@ -31,6 +31,13 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
+    id: 'keer-op-keer-2',
+    name: 'Keer op Keer 2',
+    description: 'Met speciale dobbelsteen, bommen, harten en rijen P–V. Alles wordt meegeteld.',
+    icon: '💣',
+    status: 'beschikbaar',
+  },
+  {
     id: 'ganz-schon-clever',
     name: 'Clever',
     description: 'Neon-blad per speler: bonussen, vossen en kettingreacties worden voor je bijgehouden.',
