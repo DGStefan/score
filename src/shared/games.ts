@@ -32,7 +32,7 @@ export const GAMES: readonly GameInfo[] = [
   },
   {
     id: 'ganz-schon-clever',
-    name: 'Ganz schön clever',
+    name: 'Clever',
     description: 'Neon-blad per speler: bonussen, vossen en kettingreacties worden voor je bijgehouden.',
     icon: '🦊',
     status: 'beschikbaar',

@@ -43,7 +43,7 @@ import {
 import { GSC_RULES } from './rules';
 
 /**
- * Ganz schön clever: je eigen blad op je eigen scherm.
+ * Clever: je eigen blad op je eigen scherm.
  * Jij kruist en vult in; de app ziet welke bonussen je verdient, telt vossen,
  * herworpen en +1'en, bewaakt de volgorde-regels en rekent de punten uit.
  */
@@ -118,7 +118,7 @@ function setupView(): HTMLElement {
   return h(
     'form',
     { onsubmit: start },
-    h('div', { class: 'topbar' }, h('a', { class: 'btn btn-ghost', href: '../../' }, '‹ Spellen'), h('h1', null, 'Ganz schön clever'), rulesButton(GSC_RULES)),
+    h('div', { class: 'topbar' }, h('a', { class: 'btn btn-ghost', href: '../../' }, '‹ Spellen'), h('h1', null, 'Clever'), rulesButton(GSC_RULES)),
     h(
       'div',
       { class: 'card' },
@@ -239,7 +239,7 @@ function playView(s: GscState): HTMLElement {
       'div',
       { class: 'topbar' },
       h('a', { class: 'btn btn-ghost', href: '../../' }, '‹'),
-      h('h1', null, 'Ganz schön clever', s.player ? h('span', { class: 'muted' }, ` · ${s.player}`) : null),
+      h('h1', null, 'Clever', s.player ? h('span', { class: 'muted' }, ` · ${s.player}`) : null),
       rulesButton(GSC_RULES),
     ),
     pendingView(s, sheet),
@@ -665,7 +665,7 @@ function finishGame(s: GscState): void {
   const total = score(sheetOf(s)).total;
   if (!confirm(`Blad afronden met ${total} punten en opslaan bij "Gespeeld"?`)) return;
   const name = s.player || 'Ik';
-  addHistory({ gameId: GAME_ID, title: 'Ganz schön clever', players: [{ name, score: total }], winners: [name] });
+  addHistory({ gameId: GAME_ID, title: 'Clever', players: [{ name, score: total }], winners: [name] });
   store.clear();
   state = null;
   render();

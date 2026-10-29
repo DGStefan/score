@@ -110,6 +110,16 @@
     align-self: center;
     text-align: left;
   }
+
+  /* Het blad krimpt hier mee met de kolom: geen minimale breedte, dus nooit zijwaarts scrollen */
+  .kok-board .kok-sheet-wrap {
+    overflow: visible;
+  }
+
+  .kok-board .kok-sheet {
+    min-width: 0;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  }
 }
 
 .kok-sheet-wrap {

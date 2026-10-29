@@ -1,8 +1,8 @@
 import type { Rules } from '@shared/rules';
 
-/** Spiekbriefje Ganz schön clever, in eigen woorden. */
+/** Spiekbriefje Clever, in eigen woorden. */
 export const GSC_RULES: Rules = {
-  title: 'Ganz schön clever',
+  title: 'Clever',
   intro:
     'Dobbelspel voor 1–4 spelers. Iedereen vult zijn eigen blad met vijf gekleurde gebieden. Slim kiezen levert bonussen op die weer andere bonussen activeren — daar zit de lol in.',
   sections: [

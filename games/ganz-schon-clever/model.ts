@@ -1,5 +1,5 @@
 /**
- * Ganz schön clever: indeling van het blad, bonussen en puntentelling.
+ * Clever: indeling van het blad, bonussen en puntentelling.
  * Alles wat je verdient (bonussen, vossen, herworpen, +1) wordt AFGELEID uit wat er
  * is afgekruist; opgeslagen wordt alleen wat de speler zelf invult.
  */

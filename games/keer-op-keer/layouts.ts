@@ -59,6 +59,22 @@ const COLUMN_POINTS: [number, number][] = [
   [2, 1], [2, 1], [2, 1], [3, 2], [3, 2], [3, 2], [5, 3],
 ];
 
+/** Extra bladen met dezelfde regels en punten als blad 1, alleen een andere verdeling. */
+function extraSheet(id: string, name: string, description: string, grid: string[]): Layout {
+  return {
+    id,
+    name,
+    description,
+    grid,
+    columnLabels: LABELS,
+    startColumn: 7,
+    columnPoints: COLUMN_POINTS,
+    colorBonus: [5, 3],
+    jokers: 8,
+    starPenalty: 2,
+  };
+}
+
 export const LAYOUTS: Layout[] = [
   {
     id: 'blad-1',
@@ -80,6 +96,33 @@ export const LAYOUTS: Layout[] = [
     jokers: 8,
     starPenalty: 2,
   },
+  extraSheet('blad-geel', 'Geel blok', 'Extra scoreblok (level 2–4), gele achterkant.', [
+    'rggYyyyorrgggbY',
+    'rgrrryyorrggbbb',
+    'bRrbbGggggRbOBr',
+    'oooobbbBgYybrrr',
+    'ybboorrrbbbRroo',
+    'yyBggoOyyobyyyo',
+    'GyygGooyOoooygg',
+  ]),
+  extraSheet('blad-paars', 'Paars blok', 'Extra scoreblok (level 2–4), paarse achterkant.', [
+    'yyOooGbbbyyrrgg',
+    'obbbrrrRryYbrRo',
+    'oobbYrOooBbbrbB',
+    'oGyyyyogobbObbr',
+    'gggRyoggYooooor',
+    'Bgrggogygrryyyr',
+    'rrrgbbyyggggGyy',
+  ]),
+  extraSheet('blad-oranje', 'Oranje blok', 'Extra scoreblok (level 2–4), oranje achterkant.', [
+    'OoYorrRgoRggggg',
+    'boooGrggYrrGbyy',
+    'ybbggrgyyyrrbyO',
+    'yYbyyyyBbyyrooo',
+    'rygBbGyobbbbobb',
+    'gggrbbboggOyyBb',
+    'grrrooorroooRrr',
+  ]),
 ];
 
 export function colorsFor(layout: Layout): Record<ColorKey, ColorInfo> {
