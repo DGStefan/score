@@ -91,6 +91,27 @@
   }
 }
 
+/*
+ * Liggende tablet: de hoogte is krap. Kleurbonus en score komen naast elkaar
+ * rechts van het blad, en het blad (≈ 1,5× zo breed als hoog) wordt nooit groter
+ * dan wat met kop, jokers, dobbelstenen en knoppen in de schermhoogte past.
+ */
+@media (min-width: 900px) and (orientation: landscape) {
+  .kok-board {
+    grid-template-columns: minmax(0, calc((100dvh - 360px) * 1.5)) auto auto;
+    justify-content: center;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'sheet colors scores'
+      'jokers help help';
+  }
+
+  .kok-help {
+    align-self: center;
+    text-align: left;
+  }
+}
+
 .kok-sheet-wrap {
   grid-area: sheet;
   min-width: 0;
