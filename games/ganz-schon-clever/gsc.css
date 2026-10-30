@@ -183,7 +183,7 @@
 /* ---------- Bovenkant ---------- */
 .s-top {
   display: grid;
-  grid-template-columns: 12.5cqw 1fr;
+  grid-template-columns: 1fr;
   gap: 1.8cqw;
   align-items: stretch;
 }
@@ -637,4 +637,36 @@
 .gsc .actions {
   position: sticky;
   z-index: 5;
+}
+
+/* Rondes die bij dit aantal spelers niet meedoen */
+.s-round.off {
+  opacity: 0.25;
+}
+
+.gsc-roundpill {
+  min-height: 36px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border-color: transparent;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Ingevuld vakje met ×2/×3: vermenigvuldiger blijft zichtbaar in de hoek */
+.s-mult {
+  position: absolute;
+  top: -0.6cqw;
+  right: -0.6cqw;
+  padding: 0.2cqw 0.7cqw;
+  border-radius: 1cqw;
+  background: #f6922f;
+  color: #1a0f05;
+  font-size: 2.1cqw;
+  font-weight: 900;
+  line-height: 1.2;
+  box-shadow: 0 0 0 0.35cqw #111;
+  pointer-events: none;
 }

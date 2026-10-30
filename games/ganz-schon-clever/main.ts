@@ -1,5 +1,4 @@
 import { confetti } from '@shared/confetti';
-import { dicePanel, pipFaces, type DieSpec } from '@shared/dice';
 import { h, mount, toast } from '@shared/dom';
 import { addHistory } from '@shared/history';
 import { initPage } from '@shared/page';
@@ -58,7 +57,16 @@ interface GscState extends Sheet {
   undo: Sheet[];
   /** Drie kladvakjes linksboven (zoals op het blad), los van de score. */
   notes?: (number | null)[];
+  /** Aantal spelers aan tafel; bepaalt het aantal rondes. */
+  playerCount?: number;
 }
+
+/** 1–2 spelers: 6 rondes, 3 spelers: 5, 4 spelers: 4. */
+function maxRounds(players: number | undefined): number {
+  if (!players || players <= 2) return 6;
+  return players === 3 ? 5 : 4;
+}
+const COUNT_KEY = `spel:ganz-schon-clever:aantal`;
 
 const store = sessionStore<GscState>(GAME_ID, VERSION);
 const LAST_KEY = `spel:${GAME_ID}:speler`;
@@ -69,7 +77,7 @@ const app = mount('#app');
 let state: GscState | null = store.load();
 
 function sheetOf(s: GscState): Sheet {
-  const { version: _v, player: _p, undo: _u, notes: _n, ...sheet } = s;
+  const { version: _v, player: _p, undo: _u, notes: _n, playerCount: _c, ...sheet } = s;
   return sheet;
 }
 
@@ -106,12 +114,38 @@ function setupView(): HTMLElement {
       player = (e.target as HTMLInputElement).value;
     },
   });
+  let count = readJSON<number>(COUNT_KEY, 2);
+  const countRow = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': 'Aantal spelers' });
+  const roundsNote = h('small', { class: 'muted' });
+  const paintCount = (): void => {
+    countRow.replaceChildren(
+      ...[1, 2, 3, 4].map((n) =>
+        h(
+          'label',
+          null,
+          h('input', {
+            type: 'radio',
+            name: 'aantal',
+            checked: count === n,
+            onchange: () => {
+              count = n;
+              paintCount();
+            },
+          }),
+          String(n),
+        ),
+      ),
+    );
+    roundsNote.textContent = `${maxRounds(count)} rondes`;
+  };
+  paintCount();
   const start = (e: Event): void => {
     e.preventDefault();
     const name = player.trim();
     writeJSON(LAST_KEY, name);
+    writeJSON(COUNT_KEY, count);
     if (name) rememberPlayers([name]);
-    state = { version: VERSION, player: name, ...emptySheet(), undo: [] };
+    state = { version: VERSION, player: name, playerCount: count, ...emptySheet(), undo: [] };
     store.save(state);
     render();
   };
@@ -136,6 +170,7 @@ function setupView(): HTMLElement {
           ),
         ),
       ),
+      h('div', { class: 'field' }, h('span', null, 'Met hoeveel spelers?'), countRow, roundsNote),
     ),
     h('div', { class: 'actions row stretch' }, h('button', { type: 'submit', class: 'btn-primary btn-big' }, 'Start')),
   );
@@ -240,6 +275,23 @@ function playView(s: GscState): HTMLElement {
       { class: 'topbar' },
       h('a', { class: 'btn btn-ghost', href: '../../' }, '‹'),
       h('h1', null, 'Clever', s.player ? h('span', { class: 'muted' }, ` · ${s.player}`) : null),
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'gsc-roundpill',
+          title: 'Aantal spelers (tik om te wijzigen)',
+          onclick: () => {
+            const count = ((s.playerCount ?? 2) % 4) + 1;
+            writeJSON(COUNT_KEY, count);
+            state = { ...s, playerCount: count };
+            store.save(state);
+            render();
+            toast(`${count} speler${count === 1 ? '' : 's'}: ${maxRounds(count)} rondes`);
+          },
+        },
+        `Ronde ${Math.min(s.rounds, maxRounds(s.playerCount))}/${maxRounds(s.playerCount)} · 👤${s.playerCount ?? '?'}`,
+      ),
       rulesButton(GSC_RULES),
     ),
     pendingView(s, sheet),
@@ -257,7 +309,6 @@ function playView(s: GscState): HTMLElement {
       ),
     ),
     scoreView(result),
-    diceView(),
     h(
       'div',
       { class: 'actions row stretch' },
@@ -347,49 +398,23 @@ function pendingView(s: GscState, sheet: Sheet): HTMLElement | null {
   );
 }
 
-/* ---------- Bovenkant: kladvakjes, rondes, herworpen, +1 ---------- */
+/* ---------- Bovenkant: rondes, herworpen, +1 ---------- */
 
 function topView(s: GscState, sheet: Sheet): HTMLElement {
-  const notes = s.notes ?? [null, null, null];
-  const noteBox = (i: number): HTMLElement =>
-    h(
-      'button',
-      {
-        type: 'button',
-        class: 's-note',
-        title: 'Kladvakje: noteer hier een steen',
-        'aria-label': `Kladvakje ${i + 1}`,
-        onclick: () =>
-          pickNumber(
-            'Kladvakje',
-            () => true,
-            (n) => {
-              const next = [...notes];
-              next[i] = n;
-              state = { ...s, notes: next };
-              store.save(state);
-              render();
-            },
-            () => {
-              const next = [...notes];
-              next[i] = null;
-              state = { ...s, notes: next };
-              store.save(state);
-              render();
-            },
-          ),
-      },
-      notes[i] ?? '',
-    );
-
+  const limit = maxRounds(s.playerCount);
   const rounds = ROUND_BONUS.map((kind, i) =>
     h(
       'button',
       {
         type: 'button',
-        class: `s-round${i < s.rounds ? ' done' : ''}${i === s.rounds - 1 ? ' current' : ''}`,
-        'aria-label': `Ronde ${i + 1}`,
-        onclick: () => apply(s, { ...sheet, rounds: i + 1 === s.rounds ? i : i + 1 }),
+        class: `s-round${i < s.rounds ? ' done' : ''}${i === s.rounds - 1 ? ' current' : ''}${i >= limit ? ' off' : ''}`,
+        disabled: i >= limit,
+        'aria-label': `Ronde ${i + 1}${i >= limit ? ' (niet bij dit aantal spelers)' : ''}`,
+        onclick: () => {
+          const next = i + 1 === s.rounds ? i : i + 1;
+          apply(s, { ...sheet, rounds: next });
+          if (next === limit) toast(`Laatste ronde (${limit})! Na deze ronde is het spel voorbij.`, 3500);
+        },
       },
       h('span', { class: 's-round-nr' }, i + 1),
       kind ? bonusTag(kind, i < s.rounds) : h('span', { class: 's-players', title: i === 4 ? 'Ronde 5 bij 1–3 spelers' : 'Ronde 6 bij 1–2 spelers' }, i === 4 ? '👤👤👤' : '👤👤'),
@@ -418,11 +443,8 @@ function topView(s: GscState, sheet: Sheet): HTMLElement {
   return h(
     'div',
     { class: 's-top' },
-    noteBox(0),
     h('div', { class: 's-rounds' }, rounds),
-    noteBox(1),
     track('Herworp', ICON_REROLL, countKind(sheet, 'reroll'), s.rerollsUsed, 'rerollsUsed'),
-    noteBox(2),
     track('+1', '+1', countKind(sheet, 'plus'), s.plusUsed, 'plusUsed'),
   );
 }
@@ -573,6 +595,7 @@ function orangeView(s: GscState, sheet: Sheet): HTMLElement {
         },
       },
       value !== undefined ? h('span', { class: 's-val' }, value) : mult > 1 ? h('span', { class: 's-hint' }, `×${mult}`) : null,
+      value !== undefined && mult > 1 ? h('span', { class: 's-mult', title: `telt ×${mult} = ${value * mult}` }, `×${mult}`) : null,
       bonus ? h('span', { class: 's-under' }, bonusTag(bonus, value !== undefined)) : null,
     );
   });
@@ -638,25 +661,6 @@ function scoreView(r: ReturnType<typeof score>): HTMLElement {
     h('span', { class: 'op' }, '='),
     box('Totaal', r.total, '#ffffff', 'total'),
   );
-}
-
-/* ---------- Dobbelstenen ---------- */
-
-function diceView(): HTMLElement {
-  const die = (id: string, name: string, bg: string, ink = '#ffffff'): DieSpec => ({ id, name, bg, ink, faces: pipFaces() });
-  return dicePanel({
-    id: GAME_ID,
-    dice: [
-      die('white', 'Wit', '#ffffff', '#1f1d1a'),
-      die('yellow', 'Geel', AREA_COLORS.yellow, '#1f1d1a'),
-      die('blue', 'Blauw', AREA_COLORS.blue),
-      die('green', 'Groen', AREA_COLORS.green),
-      die('orange', 'Oranje', AREA_COLORS.orange),
-      die('purple', 'Paars', AREA_COLORS.purple),
-    ],
-    hint: 'Kies een steen; stenen met een lagere waarde gaan naar het zilveren dienblad. Gooi de rest opnieuw (max. 3 keer).',
-    describe: (roll) => h('p', null, h('strong', null, `Blauw + wit = ${(roll.blue?.pips ?? 0) + (roll.white?.pips ?? 0)}`)),
-  });
 }
 
 /* ---------- Afronden ---------- */
