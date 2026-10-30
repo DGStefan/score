@@ -301,11 +301,8 @@ function playView(s: GscState): HTMLElement {
       h(
         'div',
         { class: 'gsc-sheet' },
-        topView(s, sheet),
-        h('div', { class: 's-mid' }, yellowView(s, sheet, earned), blueView(s, sheet, earned)),
-        greenView(s, sheet),
-        orangeView(s, sheet),
-        purpleView(s, sheet),
+        h('div', { class: 'gsc-col' }, topView(s, sheet), h('div', { class: 's-mid' }, yellowView(s, sheet, earned), blueView(s, sheet, earned))),
+        h('div', { class: 'gsc-col' }, greenView(s, sheet), orangeView(s, sheet), purpleView(s, sheet)),
       ),
     ),
     scoreView(result),

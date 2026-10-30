@@ -25,18 +25,27 @@
   --green: #5bd04a;
   --orange: #ff8a1f;
   --purple: #b16cf0;
-  container-type: inline-size;
   width: min(100%, calc((100dvh - 170px) * 0.7), 620px);
   display: grid;
-  gap: 1.8cqw;
-  padding: 2.4cqw;
-  border-radius: 3cqw;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
   background: #000;
   color: #fff;
   font-style: italic;
   font-weight: 800;
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
   user-select: none;
+}
+
+/* Twee helften (boven: rondes + geel/blauw, onder: groen/oranje/paars).
+   Elke helft meet zijn eigen breedte, zodat alles meeschaalt — staand onder elkaar, liggend naast elkaar. */
+.gsc-col {
+  container-type: inline-size;
+  display: grid;
+  gap: 1.8cqw;
+  align-content: start;
+  min-width: 0;
 }
 
 /* ---------- Algemeen: vakje met kruisje ---------- */
@@ -669,4 +678,120 @@
   line-height: 1.2;
   box-shadow: 0 0 0 0.35cqw #111;
   pointer-events: none;
+}
+
+/* ---------- Responsief (staat onderaan zodat het voorgaat) ---------- */
+/* Telefoon: blad zo breed als het scherm, geen hoogtegrens (liever scrollen dan piepklein) */
+@media (max-width: 600px) {
+  .gsc-sheet {
+    width: calc(100% + 20px);
+    margin-inline: -10px;
+    padding: 8px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  /* Geel en blauw onder elkaar, twee keer zo groot */
+  .s-mid {
+    grid-template-columns: 1fr;
+  }
+
+  .s-mid > *,
+  .s-lane {
+    width: calc(50cqw - 0.9cqw);
+    zoom: 2;
+  }
+
+  /* Groen/oranje/paars in rijen van 4, zodat de vakjes even groot zijn als in geel en blauw */
+  .s-lane {
+    display: grid;
+    grid-template-columns: 5cqw repeat(4, minmax(0, 1fr));
+    column-gap: 1.4cqw;
+    row-gap: 1.4cqw;
+    align-items: center;
+  }
+
+  .s-lane > .s-row {
+    display: contents;
+  }
+
+  .s-lane .s-row-top > * {
+    margin-bottom: -0.6cqw;
+  }
+
+  .s-lane .s-row > :nth-child(-n + 5) { grid-row: var(--r1); }
+  .s-lane .s-row > :nth-child(n + 6):nth-child(-n + 9) { grid-row: var(--r2); }
+  .s-lane .s-row > :nth-child(n + 10) { grid-row: var(--r3); }
+  .s-lane .s-row > :nth-child(4n + 2) { grid-column: 2; }
+  .s-lane .s-row > :nth-child(4n + 3) { grid-column: 3; }
+  .s-lane .s-row > :nth-child(4n) { grid-column: 4; }
+  .s-lane .s-row > :nth-child(4n + 1) { grid-column: 5; }
+  .s-lane .s-row > :first-child { grid-column: 1; }
+
+  /* Groen heeft een puntenschaal boven elke rij vakjes */
+  .s-lane.green .s-row-top { --r1: 1; --r2: 3; --r3: 5; }
+  .s-lane.green .s-row:not(.s-row-top) { --r1: 2; --r2: 4; --r3: 6; }
+  .s-lane:not(.green) .s-row { --r1: 1; --r2: 2; --r3: 3; }
+
+  .s-lane .s-cell {
+    aspect-ratio: 1;
+  }
+
+  .s-lane .s-hint,
+  .s-lane .s-cell {
+    font-size: 3.4cqw;
+  }
+
+  .s-lane .s-val {
+    font-size: 5.4cqw;
+  }
+
+  .s-lane:not(.green) .s-row {
+    row-gap: 2.6cqw;
+  }
+
+  .s-lane:not(.green) {
+    row-gap: 3cqw;
+  }
+}
+
+/* Liggend scherm: beide helften naast elkaar, zo groot als de hoogte toelaat */
+@media (min-width: 640px) and (orientation: landscape) {
+  .wrap.gsc-wide {
+    max-width: 1400px;
+  }
+
+  .gsc-sheet {
+    width: min(100%, calc((100dvh - 150px) * 1.55), 1300px);
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .gsc-score,
+  .gsc-pending {
+    max-width: min(100%, calc((100dvh - 150px) * 1.55), 1300px);
+  }
+}
+
+
+/* Telefoon liggend: weinig hoogte. Volle breedte en scrollen; geel en blauw naast elkaar,
+   groen/oranje/paars als volle rijen eronder. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .gsc-sheet,
+  .gsc-score,
+  .gsc-pending {
+    width: 100%;
+    max-width: none;
+  }
+
+  .gsc-sheet {
+    grid-template-columns: 1fr;
+  }
+
+  /* Rondes en herworpen niet zo enorm: smaller, en vakjes even groot als geel/blauw */
+  .s-top {
+    width: 64cqw;
+    justify-self: center;
+  }
 }
