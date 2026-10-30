@@ -1,0 +1,603 @@
+/* Keer op Keer 3 — paars blad zoals het blok; bouwt voort op keer-op-keer.css (vakjes, koppen) */
+
+.kok3-board {
+  --board: #5b3e93;
+  --board-2: #45307a;
+  --paper: #ffffff;
+  --paper-ink: #3a2768;
+  --red: #e2262f;
+  --pink: #ec3a7f;
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'sheet' 'pass' 'bottom' 'help';
+  padding: 16px;
+  border-radius: 20px;
+  background: radial-gradient(120% 100% at 30% 0%, var(--board) 0%, var(--board-2) 100%);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+  color: #fff;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif;
+}
+
+@media (min-width: 1000px) {
+  .kok3-board {
+    grid-template-columns: minmax(0, 1fr) 150px;
+    grid-template-areas: 'sheet pass' 'bottom pass' 'help help';
+  }
+}
+
+.kok3-sheet-wrap {
+  grid-area: sheet;
+  min-width: 0;
+}
+
+.kok3-pass {
+  grid-area: pass;
+}
+
+.kok3-bottom {
+  grid-area: bottom;
+}
+
+.kok3-help {
+  grid-area: help;
+  text-align: left;
+}
+
+/* Raster: [✕] A–O [letter] */
+.kok-sheet.kok3-sheet {
+  grid-template-columns: repeat(17, minmax(0, 1fr));
+  min-width: calc(17 * 36px);
+}
+
+@media (min-width: 760px) {
+  .kok-sheet.kok3-sheet {
+    min-width: 0;
+  }
+}
+
+.kok3-spacer {
+  display: block;
+}
+
+.kok3-rowlabel {
+  margin: 0;
+}
+
+/* Ruitje in een vakje */
+.kok3-diamond {
+  position: absolute;
+  inset: 20%;
+  color: rgb(255 255 255 / 0.88);
+  pointer-events: none;
+}
+
+.kok3-diamond svg,
+.kok3-dslot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Kruispunt op de hoek linksboven van het vakje */
+.kok3-crossing {
+  position: absolute;
+  left: -2px;
+  top: -2px;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 54%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid #1f1a2e;
+  background: #fff;
+  color: #1f1a2e;
+  font-weight: 900;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(0.5rem, 1.05vw, 0.85rem);
+  letter-spacing: -0.06em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.kok3-crossing.done {
+  background: #1f1a2e;
+  color: #fff;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* Bom: vakjes waar je nu vrij mag kruisen */
+.kok-cell.bomb-target {
+  outline: 2px dashed #fff;
+  outline-offset: -3px;
+}
+
+/* ---------- Bonusvakjes ---------- */
+.kok3-bonus {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: clamp(0.8rem, 1.6vw, 1.2rem);
+  line-height: 1;
+}
+
+.kok3-bonus.empty {
+  background: transparent;
+}
+
+.kok3-bonus.first {
+  box-shadow: inset 0 0 0 3px var(--pink);
+}
+
+.kok3-bonus.b-joker {
+  border-radius: 50%;
+}
+
+.kok3-bonus.b-pass {
+  color: var(--pink);
+}
+
+.kok3-bonus.won::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 3px solid #1a9b5b;
+}
+
+.kok3-bonus.won {
+  background: #d9f5e3;
+}
+
+.kok3-bonus.taken {
+  opacity: 0.5;
+}
+
+.kok3-bonus.taken::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 50%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--red);
+  transform: rotate(-35deg);
+}
+
+/* ---------- Pas-balk ---------- */
+.kok3-pass {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.kok3-start {
+  display: grid;
+  grid-template-columns: 34px auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 900;
+  font-size: 1.3rem;
+  justify-content: start;
+  text-align: left;
+}
+
+.kok3-start small {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7a6aa0;
+}
+
+.kok3-start-color {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--fill, repeating-linear-gradient(45deg, #ddd 0 4px, #fff 4px 8px));
+}
+
+.kok3-pass-fields {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+}
+
+.kok3-pass-fields li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kok3-pass-field {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: #fff;
+  transform: rotate(45deg) scale(0.8);
+  position: relative;
+}
+
+.kok3-pass-fields li.dark .kok3-pass-field {
+  background: #b9a6e3;
+}
+
+.kok3-pass-fields li.filled .kok3-pass-field::before,
+.kok3-pass-fields li.filled .kok3-pass-field::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: #2a1d4d;
+  transform: rotate(0deg);
+}
+
+.kok3-pass-fields li.filled .kok3-pass-field::after {
+  transform: rotate(90deg);
+}
+
+.kok3-pass-bonus {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #7d64b8;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.kok3-pass-bonus.won {
+  background: #1a9b5b;
+}
+
+.kok3-pass-end {
+  display: flex;
+  gap: 4px;
+}
+
+.kok3-pass-end .kok3-bonus {
+  width: 30px;
+}
+
+.kok3-pass-help {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 0.7);
+}
+
+/* Breed: pas-balk als zigzag langs de rechterkant */
+@media (min-width: 1000px) {
+  .kok3-pass-fields {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 2px;
+  }
+
+  .kok3-pass-fields li:nth-child(odd) {
+    padding-left: 14px;
+  }
+}
+
+/* ---------- Onderkant ---------- */
+.kok3-bottom {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.kok3-jokers {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+.kok3-joker-label {
+  font-weight: 900;
+  margin-right: 4px;
+}
+
+.kok3-joker-label b {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #2a1d4d;
+  color: #fff;
+}
+
+.kok3-joker {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px dotted #b8aed0;
+  background: #fff;
+  color: #c9c1dd;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+.kok3-joker:disabled {
+  opacity: 1;
+}
+
+.kok3-joker.on {
+  border: 3px solid #2a1d4d;
+  color: #2a1d4d;
+}
+
+.kok3-joker.used::after {
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  background: var(--red);
+  border-radius: 2px;
+  transform: rotate(-45deg);
+}
+
+.kok3-box {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.kok3-colors {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+}
+
+.kok3-color {
+  display: grid;
+  gap: 4px;
+}
+
+.kok3-swatch {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--fill);
+  color: #10282b;
+  font-size: 0.7rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.6);
+}
+
+.kok3-color.complete .kok3-swatch {
+  box-shadow: inset 0 0 0 3px #fff, 0 0 0 2px #1a9b5b;
+}
+
+.kok3-drow,
+.kok3-crow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+}
+
+.kok3-crow {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) repeat(2, minmax(0, 1fr));
+}
+
+.kok3-crow:last-child {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 2fr;
+}
+
+.kok3-dslot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 18%;
+  border-radius: 50%;
+  background: #7d64b8;
+  color: #a996d6;
+}
+
+.kok3-dslot.on {
+  background: #fff;
+  color: #6fcdf2;
+}
+
+.kok3-cslot {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 900;
+  font-size: 0.8rem;
+  letter-spacing: -0.06em;
+}
+
+.kok3-cslot.on {
+  background: #fff;
+  color: #2a1d4d;
+}
+
+.kok3-chips {
+  align-content: start;
+}
+
+.kok3-chip-row {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.kok3-chip {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: #f6c431;
+  color: #8a5a00;
+  font-weight: 900;
+  font-size: clamp(0.8rem, 1.6vw, 1.1rem);
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.15);
+}
+
+.kok3-chip.gone {
+  background: transparent;
+  color: rgb(255 255 255 / 0.3);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.25);
+}
+
+.kok3-chips p {
+  margin: 0;
+}
+
+.kok3-tiebreak {
+  font-size: 0.75rem;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.kok3-gift {
+  min-height: 40px;
+  border: none;
+  background: rgb(255 255 255 / 0.18);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Kop: X-chips over */
+.kok3-chipcount {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f6c431;
+  color: #5a3a00;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.kok3-chipcount.done {
+  background: #1a9b5b;
+  color: #fff;
+}
+
+/* Meldingen en dialoogjes (zelfde stijl als Keer op Keer 2) */
+.kok2-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--gap);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: #1f1d1a;
+  color: #fff;
+}
+
+.kok2-banner span {
+  flex: 1 1 260px;
+  font-weight: 600;
+}
+
+.kok2-actions .rules-body {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.kok2-action {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  justify-content: start;
+  padding: 10px 12px;
+}
+
+.kok2-action-icon {
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.kok2-action span:last-child {
+  display: grid;
+}
+
+.kok2-action small {
+  color: var(--muted);
+}
+
+.kok3-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kok3-pick-color,
+.kok3-pick-num {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  font-weight: 900;
+  font-size: 1.2rem;
+}
+
+.kok3-pick-color {
+  background: var(--fill);
+  border: none;
+}
+
+.kok3-pick-color.on,
+.kok3-pick-num.on {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.kok3-pick-num.on {
+  background: #1f1d1a;
+  color: #fff;
+}

@@ -58,6 +58,15 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
+    id: 'keer-op-keer-3',
+    name: 'Keer op Keer 3',
+    description: 'Paars blad met ruitjes, kruispunten en een pas-balk. Wie het eerst zijn 10 X-chips kwijt is, wint.',
+    icon: '✖️',
+    kind: 'dobbel',
+    color: '#6a48b0',
+    status: 'beschikbaar',
+  },
+  {
     id: 'ganz-schon-clever',
     name: 'Clever',
     description: 'Neon-blad per speler: bonussen, vossen en kettingreacties worden voor je bijgehouden.',
