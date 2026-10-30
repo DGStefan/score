@@ -1,0 +1,724 @@
+/* Trek 12 — berg in de sfeer van het blad: mintgroen landschap, papieren telbalk */
+
+.wrap.t12-wide {
+  max-width: 1240px;
+}
+
+.topbar h1 .muted {
+  font-weight: 400;
+}
+
+.t12 {
+  --t12-ink: #1f2b29;
+  --t12-paper: #ebe7df;
+  --t12-tan: #f0dcc0;
+  --t12-line: #c9772f;
+  --t12-zone: #2d6fd0;
+  --t12-hand: 'Marker Felt', 'Chalkboard SE', 'Segoe Print', 'Comic Sans MS', ui-rounded, system-ui, sans-serif;
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  grid-template-areas: 'map' 'side' 'paper';
+}
+
+.t12-map-wrap {
+  grid-area: map;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
+}
+
+.t12-paper {
+  grid-area: paper;
+  border-radius: 18px;
+  margin-top: 8px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+}
+
+.t12-side {
+  grid-area: side;
+}
+
+/* Breed: kaart + telbalk als één blad links, bediening rechts */
+@media (min-width: 900px) {
+  .t12 {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'map side' 'paper side';
+    row-gap: 0;
+  }
+
+  .t12-map-wrap {
+    border-radius: 18px 18px 0 0;
+    box-shadow: none;
+  }
+
+  .t12-paper {
+    border-radius: 0 0 18px 18px;
+    margin-top: 0;
+    box-shadow: 0 14px 24px rgb(0 0 0 / 0.12);
+  }
+}
+
+.t12-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.t12-spot {
+  fill: rgb(232 248 243 / 0.78);
+  stroke: #33413e;
+  stroke-width: 2.5;
+}
+
+.t12-spot.filled {
+  fill: rgb(246 252 250 / 0.92);
+}
+
+.t12-spot.danger {
+  stroke: #1d2422;
+  stroke-width: 8;
+}
+
+.t12-zone {
+  opacity: 0.3;
+}
+
+.t12-zone line {
+  stroke: var(--t12-zone);
+  stroke-width: 96;
+  stroke-linecap: round;
+}
+
+.t12-zone circle {
+  fill: var(--t12-zone);
+}
+
+.t12-rope,
+.t12-rope-core {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.t12-rope {
+  stroke: #6f3f15;
+  stroke-width: 20;
+  opacity: 0.85;
+}
+
+.t12-rope-core {
+  stroke: #e3a057;
+  stroke-width: 11;
+  stroke-dasharray: 10 8;
+}
+
+.t12-num,
+.t12-ghost,
+.t12-skull,
+.t12-orphan {
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-family: var(--t12-hand);
+  pointer-events: none;
+}
+
+.t12-num {
+  font-size: 64px;
+  font-weight: 700;
+  fill: var(--t12-ink);
+  paint-order: stroke;
+  stroke: rgb(255 255 255 / 0.85);
+  stroke-width: 6px;
+}
+
+.t12-num.orphan {
+  opacity: 0.45;
+}
+
+.t12-orphan {
+  font-size: 34px;
+  fill: #b23a2e;
+}
+
+.t12-skull {
+  font-size: 76px;
+  fill: #b23a2e;
+}
+
+.t12-ghost {
+  font-size: 52px;
+  font-weight: 700;
+  fill: rgb(31 43 41 / 0.35);
+}
+
+.t12-ghost.skull {
+  fill: rgb(178 58 46 / 0.5);
+}
+
+.t12-tap {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.t12-hit:focus {
+  outline: none;
+}
+
+.t12-hit:focus-visible .t12-tap {
+  stroke: #1d5fb8;
+  stroke-width: 6;
+}
+
+/* Hier mag je iets neerzetten (nog geen uitkomst gekozen): stippelrand */
+.t12-hit.open .t12-tap {
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-dasharray: 8 9;
+}
+
+/* Hier komt het gekozen getal: gloeiend */
+.t12-glow {
+  fill: rgb(255 214 90 / 0.4);
+  stroke: #f2b632;
+  stroke-width: 6;
+  animation: t12-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes t12-pulse {
+  50% {
+    fill: rgb(255 214 90 / 0.15);
+    stroke-width: 3;
+  }
+}
+
+.t12-sel {
+  fill: none;
+  stroke: #f2b632;
+  stroke-width: 9;
+}
+
+.t12-hit.shake {
+  animation: t12-shake 0.35s;
+}
+
+@keyframes t12-shake {
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* ---------- Telbalk (papier) ---------- */
+.t12-paper {
+  position: relative;
+  padding: 18px 14px 14px;
+  background: var(--t12-paper);
+  color: var(--t12-ink);
+}
+
+/* Gescheurde rand */
+.t12-paper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 12px;
+  background: var(--t12-paper);
+  clip-path: polygon(0 60%, 4% 20%, 9% 70%, 14% 30%, 20% 80%, 26% 25%, 31% 65%, 37% 15%, 43% 70%, 49% 35%, 55% 75%, 61% 20%, 67% 60%, 73% 30%, 79% 75%, 85% 25%, 91% 65%, 96% 30%, 100% 55%, 100% 100%, 0 100%);
+}
+
+.t12-paper-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 12px;
+}
+
+.t12-title {
+  font-family: Rockwell, 'Roboto Slab', 'Courier New', Georgia, serif;
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: 0.02em;
+  padding: 2px 18px;
+  background: #f8f6f1;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  transform: rotate(-1.2deg);
+}
+
+.t12-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.t12-star {
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #f8f6f1;
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.t12-star.on {
+  background: #ffe79a;
+}
+
+.t12-bonus-table {
+  display: flex;
+  margin-left: auto;
+  border: 1.5px solid #8a857b;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.t12-bonus-table span {
+  display: grid;
+  text-align: center;
+  min-width: 24px;
+  border-left: 1px solid #b3ada2;
+}
+
+.t12-bonus-table span:first-child {
+  border-left: none;
+}
+
+.t12-bonus-table i {
+  font-style: normal;
+  background: #9a958b;
+  color: #fff;
+  padding: 1px 3px;
+}
+
+.t12-bonus-table b {
+  padding: 1px 3px;
+}
+
+.t12-paper-body {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .t12-paper-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.t12-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.t12-srow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 12px 34px 12px 40px;
+  align-items: center;
+  gap: 4px;
+}
+
+.t12-sicon::before {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.t12-srow.line .t12-sicon::before {
+  content: 'Lijn';
+  color: var(--t12-line);
+}
+
+.t12-srow.zone .t12-sicon::before {
+  content: 'Zone';
+  color: var(--t12-zone);
+}
+
+.t12-boxes {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.t12-box {
+  display: grid;
+  place-items: center;
+  height: 32px;
+  min-width: 0;
+  border: 1.5px solid #4a4741;
+  margin-left: -1.5px;
+  background: rgb(255 255 255 / 0.55);
+  font-family: var(--t12-hand);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.t12-box.bonus {
+  background: #d9d5cc;
+  margin: 0;
+}
+
+.t12-box.sum {
+  margin: 0;
+  background: #fff;
+}
+
+.t12-op-s {
+  text-align: center;
+  font-weight: 800;
+}
+
+.t12-final {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.t12-mini {
+  display: grid;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.t12-mini i {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.t12-mini b {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 34px;
+  border: 1.5px solid #4a4741;
+  background: rgb(255 255 255 / 0.55);
+  font-family: var(--t12-hand);
+  font-size: 1.15rem;
+}
+
+.t12-mini.minus b {
+  color: #b23a2e;
+}
+
+.t12-total {
+  display: grid;
+  place-items: center;
+  min-width: 76px;
+  height: 64px;
+  padding: 0 8px;
+  border: 2.5px solid #2f2c27;
+  background: #fff;
+  font-family: var(--t12-hand);
+  font-size: 2.1rem;
+  font-weight: 700;
+}
+
+/* ---------- Zijpaneel ---------- */
+.t12-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.t12-round {
+  font-size: 1.05rem;
+}
+
+.t12-dice {
+  display: grid;
+  gap: 8px;
+}
+
+.t12-die-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.t12-die {
+  min-width: 0;
+  min-height: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--d) 18%, var(--surface));
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--d) 45%, transparent);
+}
+
+.t12-die.red {
+  --d: #d8434a;
+  --dink: #ffffff;
+}
+
+.t12-die.yellow {
+  --d: #f0bf2e;
+  --dink: #3a2a00;
+}
+
+.t12-die.on {
+  background: var(--d);
+  color: var(--dink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--d) 35%, transparent), 0 3px 8px rgb(0 0 0 / 0.2);
+  transform: translateY(-1px);
+}
+
+.t12-roll {
+  min-height: 46px;
+  font-weight: 700;
+  background: var(--surface);
+}
+
+/* Uitkomsten: als het tabelletje op het blad */
+.t12-ops {
+  display: grid;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--t12-tan);
+  color: #3a2c1c;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12);
+}
+
+.t12-op {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.t12-op + .t12-op {
+  border-top: 1px solid rgb(90 70 48 / 0.18);
+  border-radius: 0 0 8px 8px;
+}
+
+.t12-op:disabled {
+  opacity: 0.45;
+}
+
+.t12-op.on {
+  background: #fff7e6;
+  box-shadow: inset 0 0 0 2.5px var(--accent);
+  border-radius: 8px;
+}
+
+.t12-op-sym {
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.t12-op-name {
+  font-weight: 600;
+}
+
+.t12-op-val {
+  font-family: var(--t12-hand);
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.t12-op.high .t12-op-val {
+  color: #b23a2e;
+}
+
+.t12-ticks {
+  display: flex;
+  gap: 3px;
+}
+
+.t12-ticks i {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #5a4630;
+  background: rgb(255 255 255 / 0.5);
+}
+
+.t12-ticks i.used::before {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.t12-hint {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Telling */
+.t12-select {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.t12-select p {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.t12-warn {
+  color: var(--danger);
+}
+
+.t12-make.line {
+  background: var(--t12-line);
+  border-color: var(--t12-line);
+  color: #fff;
+}
+
+.t12-make.zone {
+  background: var(--t12-zone);
+  border-color: var(--t12-zone);
+  color: #fff;
+}
+
+.t12-clear-sel {
+  flex: 0 0 auto;
+}
+
+.t12-glist h3 {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.t12-glist.line h3 {
+  color: var(--t12-line);
+}
+
+.t12-glist.zone h3 {
+  color: var(--t12-zone);
+}
+
+.t12-glist p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.t12-glist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.t12-glist li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 2px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border-left: 4px solid currentColor;
+}
+
+.t12-glist.line li {
+  color: var(--t12-line);
+}
+
+.t12-glist.zone li {
+  color: var(--t12-zone);
+}
+
+.t12-glist li > * {
+  color: var(--text);
+}
+
+.t12-glist li .btn-ghost {
+  color: var(--muted);
+}
+
+.t12-gname {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.t12-orphans {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.t12-cards {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.92rem;
+}
+
+.t12-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.t12-stepper b {
+  min-width: 1.5em;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.t12-back {
+  justify-self: start;
+}
+
+/* ---------- Startscherm ---------- */
+.t12-mountains {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.t12-mountain {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 12px;
+  text-align: left;
+}
+
+.t12-mountain.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.t12-diff {
+  color: #e0a526;
+  letter-spacing: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t12-glow,
+  .t12-hit.shake {
+    animation: none;
+  }
+}

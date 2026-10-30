@@ -67,6 +67,15 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
+    id: 'trek-12',
+    name: 'Trek 12',
+    description: 'Vul je berg met getallen, trek lijnen en zones; de app controleert en telt.',
+    icon: '🏔️',
+    kind: 'dobbel',
+    color: '#3fa58f',
+    status: 'beschikbaar',
+  },
+  {
     id: 'keer-op-keer',
     name: 'Keer op Keer',
     description: 'Scoreblad voor op de tablet: zelf afkruisen, de score rekent mee.',
