@@ -1,4 +1,5 @@
 import './style.css';
+import { applyTheme } from './theme';
 
 interface PageOptions {
   /** Relatief pad naar de root van de app, bv. '' voor de portal, '../../' voor een spel. */
@@ -9,6 +10,10 @@ interface PageOptions {
 
 /** Gemeenschappelijke start voor elke pagina. */
 export function initPage({ root, keepAwake = false }: PageOptions): void {
+  applyTheme();
+  // Terug via de terugknop (bfcache) of thema gewijzigd in een ander tabblad
+  window.addEventListener('pageshow', () => applyTheme());
+  window.addEventListener('storage', () => applyTheme());
   registerServiceWorker(root);
   if (keepAwake) keepScreenOn();
 }

@@ -8,6 +8,12 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
+    <script>
+      try {
+        var t = JSON.parse(localStorage.getItem('scores:thema'));
+        if (t === 'licht' || t === 'donker') document.documentElement.dataset.theme = t === 'licht' ? 'light' : 'dark';
+      } catch (e) {}
+    </script>
     <title>Clever · Scores</title>
   </head>
   <body>

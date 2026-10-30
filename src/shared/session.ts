@@ -16,6 +16,7 @@ export interface SessionStore<T extends Versioned> {
 }
 
 export const sessionKey = (gameId: string): string => `spel:${gameId}:actief`;
+const touchedKey = (gameId: string): string => `spel:${gameId}:bijgewerkt`;
 
 export function sessionStore<T extends Versioned>(gameId: string, version: number): SessionStore<T> {
   const key = sessionKey(gameId);
@@ -26,13 +27,20 @@ export function sessionStore<T extends Versioned>(gameId: string, version: numbe
     },
     save(state) {
       writeJSON(key, state);
+      writeJSON(touchedKey(gameId), Date.now());
     },
     clear() {
       removeKey(key);
+      removeKey(touchedKey(gameId));
     },
   };
 }
 
 export function hasActiveSession(gameId: string): boolean {
   return hasKey(sessionKey(gameId));
+}
+
+/** Moment van de laatste zet in een lopend spel (ms), of null als onbekend. */
+export function sessionUpdatedAt(gameId: string): number | null {
+  return readJSON<number | null>(touchedKey(gameId), null);
 }

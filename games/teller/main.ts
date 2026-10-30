@@ -307,6 +307,7 @@ function setupView(): HTMLElement {
           'button',
           {
             type: 'button',
+            class: 'btn-add',
             onclick: () => {
               draft.players.push('');
               renderPlayers(draft.players.length - 1);
@@ -479,15 +480,15 @@ function playView(s: CounterState): HTMLElement {
           h(
             'div',
             { class: 'player-row' },
-            h('button', { class: 'btn-big btn-minus', onclick: () => addMove(i, -1), 'aria-label': `${name} min 1` }, '−1'),
-            h('button', { class: 'btn-big btn-primary', onclick: () => addMove(i, 1), 'aria-label': `${name} plus 1` }, '+1'),
+            h('button', { class: 'btn-step minus', onclick: () => addMove(i, -1), 'aria-label': `${name} min 1` }, '−1'),
+            h('button', { class: 'btn-step plus', onclick: () => addMove(i, 1), 'aria-label': `${name} plus 1` }, '+1'),
           ),
           h(
             'div',
             { class: 'amount' },
+            h('button', { class: 'amount-btn minus', onclick: () => applyAmount(-1), 'aria-label': 'Aftrekken' }, '−'),
             amount,
-            h('button', { class: 'btn-minus', onclick: () => applyAmount(-1), 'aria-label': 'Aftrekken' }, '−'),
-            h('button', { class: 'btn-primary', onclick: () => applyAmount(1), 'aria-label': 'Optellen' }, '+'),
+            h('button', { class: 'amount-btn plus', onclick: () => applyAmount(1), 'aria-label': 'Optellen' }, '+'),
           ),
         );
       }),
@@ -527,7 +528,7 @@ function playView(s: CounterState): HTMLElement {
           innerHTML: UNDO_ICON,
         },
       ),
-      h('button', { class: 'btn-danger', onclick: () => clearGame() }, 'Wissen'),
+      h('button', { class: 'btn-ghost btn-danger btn-clear', onclick: () => clearGame() }, 'Wissen'),
       h('button', { class: 'btn-primary', onclick: () => finishGame(s) }, 'Afronden'),
     ),
   );

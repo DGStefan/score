@@ -13,11 +13,16 @@
   --leader: #e8b93a;
   --radius: 14px;
   --gap: 12px;
+  /* Rand om spelerkaarten; in donker nodig voor contrast met de achtergrond */
+  --card-edge: transparent;
+  --tint-minus: 15%;
+  --tint-plus: 20%;
   color-scheme: light dark;
 }
 
+/* Donker: volgt het apparaat, tenzij in de portal licht/donker is gekozen */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #161513;
     --surface: #22201d;
     --surface-2: #2c2a26;
@@ -30,7 +35,33 @@
     --minus: #d65a43;
     --minus-text: #1a0d0a;
     --leader: #e8b93a;
+    --card-edge: #45413a;
+    --tint-minus: 24%;
+    --tint-plus: 28%;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #161513;
+  --surface: #22201d;
+  --surface-2: #2c2a26;
+  --text: #f1ede4;
+  --muted: #a39d92;
+  --border: #3a3732;
+  --accent: #4fa88f;
+  --accent-text: #0f1a16;
+  --danger: #e0775f;
+  --minus: #d65a43;
+  --minus-text: #1a0d0a;
+  --leader: #e8b93a;
+  --card-edge: #45413a;
+  --tint-minus: 24%;
+  --tint-plus: 28%;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 * {
@@ -230,10 +261,29 @@ button:focus-visible,
   pointer-events: none;
 }
 
+.segmented label {
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+
 .segmented label:has(input:checked) {
-  background: var(--surface);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.btn-add {
+  width: 100%;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 60%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--accent);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
 }
 
 .check {
@@ -265,53 +315,291 @@ button:focus-visible,
 }
 
 /* ---------- Portal ---------- */
-.games {
+.portal-head {
+  padding: 8px 0 4px;
+}
+
+.portal-head h1 {
+  font-size: 2rem;
+  margin-bottom: 2px;
+}
+
+.portal-head p {
+  margin: 0;
+}
+
+.portal-section h2 {
+  margin: 26px 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Thema-keuze rechtsboven */
+.portal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theme-switch {
+  flex: none;
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.theme-switch button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.theme-switch button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.theme-switch button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+/* Gekleurd icoonvlak; kleur per spel via --c */
+.game-icon {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 14px;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: color-mix(in srgb, var(--c) 20%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 35%, transparent);
+}
+
+.game-icon.small {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+}
+
+/* Verder spelen */
+.resume-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: var(--gap);
 }
 
-.game-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 12px;
-  align-items: start;
+.resume-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--c);
   color: inherit;
   text-decoration: none;
-  position: relative;
 }
 
-.game-card .icon {
-  font-size: 2rem;
-  grid-row: span 2;
+.resume-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
 }
 
-.game-card p {
-  margin: 0;
-  font-size: 0.9rem;
+.resume-text strong {
+  font-size: 1.05rem;
 }
 
-.game-card.disabled {
-  opacity: 0.5;
+.resume-text .muted {
+  font-size: 0.85rem;
 }
 
-.badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 8px;
+.resume-go {
+  flex: none;
+  padding: 8px 12px;
   border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Filter op soort */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -16px;
+  padding-inline: 16px;
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-chips .chip {
+  flex: none;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.filter-chips .chip.selected {
   background: var(--accent);
   color: var(--accent-text);
 }
 
-.badge.soon {
+.chip-count {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.portal-section > .row {
+  margin: 26px 0 10px;
+  align-items: center;
+}
+
+.portal-section > .row h2 {
+  margin: 0;
+}
+
+/* Spel-tegels */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--gap);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+}
+
+a.tile:hover {
+  border-color: color-mix(in srgb, var(--c) 60%, var(--border));
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.08);
+}
+
+a.tile:active,
+.resume-card:active {
+  transform: scale(0.98);
+}
+
+.tile .game-icon {
+  margin-bottom: 4px;
+}
+
+.tile h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.tile p {
+  margin: 0;
+  font-size: 0.85rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile-foot {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.tile.is-active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.tile.disabled {
+  opacity: 0.5;
+}
+
+.tile-count {
+  font-size: 0.8rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
   background: var(--surface-2);
   color: var(--muted);
 }
 
+.pill.live {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  color: var(--accent);
+}
+
+.pill.live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pill-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pill-pulse {
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill.live::before { animation: none; }
+}
+
+@media (max-width: 420px) {
+  .tiles {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .tile {
+    padding: 12px;
+  }
+
+  .tile p {
+    -webkit-line-clamp: 2;
+  }
+}
+
+/* Geschiedenis */
 .history {
   list-style: none;
   padding: 0;
@@ -320,23 +608,65 @@ button:focus-visible,
   gap: 8px;
 }
 
-.history li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px;
-  padding: 12px 14px;
+.history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 8px 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
+.history-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.history-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+}
+
+.history-title .muted,
 .history .meta {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .history .scores {
-  font-size: 0.95rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
 }
 
-.history .winner {
+.score-chip {
+  font-size: 0.85rem;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.score-chip.winner {
+  background: color-mix(in srgb, var(--leader) 30%, var(--surface));
   font-weight: 700;
+}
+
+.history-del {
+  flex: none;
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--muted);
+}
+
+.history-more {
+  display: block;
+  margin: 10px auto 0;
 }
 
 /* ---------- Scoreblad ---------- */
@@ -348,34 +678,49 @@ button:focus-visible,
 
 .player {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 16px;
+  border-color: var(--card-edge);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 16px rgb(0 0 0 / 0.04);
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .player.leader {
-  border-color: var(--leader);
-  box-shadow: inset 0 0 0 2px var(--leader);
+  box-shadow: inset 0 0 0 2px var(--leader), 0 4px 16px color-mix(in srgb, var(--leader) 18%, transparent);
 }
 
 .player-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
 .player-name {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 1.05rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.player.leader:not(.reached) .player-name::after {
+  content: '★';
+  margin-left: 6px;
+  color: var(--leader);
+  font-size: 0.9em;
+}
+
 .player-score {
-  font-size: 2.6rem;
-  font-weight: 800;
+  font-size: 2.4rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   line-height: 1;
+}
+
+.player .progress {
+  height: 4px;
 }
 
 .player-row {
@@ -384,14 +729,83 @@ button:focus-visible,
   gap: 8px;
 }
 
-.amount {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 8px;
+/* Zachte stapknoppen: getinte achtergrond, gekleurde tekst */
+.btn-step {
+  min-height: 54px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.amount input {
+.btn-step.minus {
+  background: color-mix(in srgb, var(--minus) var(--tint-minus), var(--surface));
+  color: var(--minus);
+}
+
+.btn-step.plus {
+  background: color-mix(in srgb, var(--accent) var(--tint-plus), var(--surface));
+  color: var(--accent);
+}
+
+/* Eén samengestelde invoer: − [aantal] + */
+.amount {
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  border-radius: 12px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.amount input[type='number'] {
+  min-width: 0;
+  border: none;
+  background: transparent;
   text-align: center;
+  font-weight: 600;
+  -moz-appearance: textfield;
+}
+
+.amount input::-webkit-outer-spin-button,
+.amount input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amount input:focus-visible {
+  outline: none;
+}
+
+.amount:focus-within {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.amount-btn {
+  min-height: 46px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.amount-btn.minus {
+  color: var(--minus);
+}
+
+.amount-btn.plus {
+  color: var(--accent);
+}
+
+:is(.player.place-1, .player.place-2, .player.place-3) :is(.btn-step, .amount) {
+  background: rgb(255 255 255 / 0.55);
+}
+
+.actions .btn-clear {
+  flex: 0 1 auto;
+  padding-inline: 18px;
 }
 
 .player-setup {
@@ -634,9 +1048,12 @@ details.log ol {
   background: rgb(35 29 16 / 0.65);
 }
 
+:is(.player.place-1, .player.place-2, .player.place-3) .tally {
+  color: #231d10;
+}
+
 :is(.player.place-1, .player.place-2, .player.place-3) .amount input {
-  background: rgb(255 255 255 / 0.7);
-  border-color: rgb(0 0 0 / 0.15);
+  background: transparent;
   color: #231d10;
 }
 

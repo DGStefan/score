@@ -13,13 +13,21 @@ body.sg-page {
 }
 
 @media (prefers-color-scheme: dark) {
-  body.sg-page {
+  :root:not([data-theme='light']) body.sg-page {
     --bg: #1f2d4f;
     --sg-ink: #f1ede4;
     background:
       radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.06) 1.5px, transparent 0) 0 0 / 22px 22px,
       linear-gradient(180deg, #24355d, #18233f);
   }
+}
+
+:root[data-theme='dark'] body.sg-page {
+  --bg: #1f2d4f;
+  --sg-ink: #f1ede4;
+  background:
+    radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.06) 1.5px, transparent 0) 0 0 / 22px 22px,
+    linear-gradient(180deg, #24355d, #18233f);
 }
 
 .wrap:has(.sg) {
