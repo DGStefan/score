@@ -26,6 +26,8 @@ export type ActionKind =
   | 'water' // water geven in een zone naar keuze
   | 'plant' // planten in een zone naar keuze
   | 'plantwater'
+  | 'garden' // planten of water geven in de zone van de steen (zie bron)
+  | 'apiaryfruit' // bijenstal óf fruit
   | FlowerId; // vaste plant van deze soort
 
 export interface Effect {
@@ -85,12 +87,12 @@ export const UNITS: Unit[] = [
 
 /** Plek van het zonenummer (tik = zone-paneel). */
 export const ZONE_BADGES: Record<number, [number, number]> = {
-  1: [118, 140],
-  2: [455, 470],
-  3: [960, 160],
-  4: [948, 905],
-  5: [672, 950],
-  6: [320, 945],
+  1: [92, 100],
+  2: [334, 96],
+  3: [996, 92],
+  4: [832, 936],
+  5: [622, 932],
+  6: [339, 936],
 };
 
 export type FlowerId = 'tulip' | 'hydrangea' | 'iris' | 'hyacinth' | 'crocus' | 'daffodil';
@@ -123,21 +125,23 @@ export interface Pumpkin {
   goods: number;
   pos: [number, number];
   between: FlowerId;
+  /** Plek van het bloemlabel tussen deze en de volgende pompoen. */
+  label: [number, number];
 }
 
 export const PUMPKINS: Pumpkin[] = [
-  { zone: 1, height: 1, goods: 1, pos: [228, 120], between: 'iris' },
-  { zone: 2, height: 4, goods: 3, pos: [535, 110], between: 'tulip' },
-  { zone: 3, height: 2, goods: 1, pos: [800, 115], between: 'hyacinth' },
-  { zone: 3, height: 3, goods: 2, pos: [1000, 245], between: 'iris' },
-  { zone: 4, height: 4, goods: 3, pos: [1000, 500], between: 'daffodil' },
-  { zone: 4, height: 3, goods: 3, pos: [1000, 800], between: 'crocus' },
-  { zone: 4, height: 1, goods: 1, pos: [855, 985], between: 'hydrangea' },
-  { zone: 5, height: 2, goods: 1, pos: [535, 965], between: 'tulip' },
-  { zone: 6, height: 4, goods: 3, pos: [235, 950], between: 'hyacinth' },
-  { zone: 6, height: 3, goods: 2, pos: [80, 815], between: 'daffodil' },
-  { zone: 1, height: 4, goods: 3, pos: [80, 455], between: 'crocus' },
-  { zone: 1, height: 3, goods: 2, pos: [80, 245], between: 'hydrangea' },
+  { zone: 1, height: 1, goods: 1, pos: [228, 120], between: 'iris', label: [424, 88] },
+  { zone: 2, height: 4, goods: 3, pos: [535, 110], between: 'tulip', label: [673, 84] },
+  { zone: 3, height: 2, goods: 1, pos: [800, 115], between: 'hyacinth', label: [875, 146] },
+  { zone: 3, height: 3, goods: 2, pos: [1000, 245], between: 'iris', label: [1000, 376] },
+  { zone: 4, height: 4, goods: 3, pos: [1000, 500], between: 'daffodil', label: [961, 704] },
+  { zone: 4, height: 3, goods: 3, pos: [1000, 800], between: 'crocus', label: [953, 945] },
+  { zone: 4, height: 1, goods: 1, pos: [855, 985], between: 'hydrangea', label: [712, 1018] },
+  { zone: 5, height: 2, goods: 1, pos: [535, 965], between: 'tulip', label: [347, 1016] },
+  { zone: 6, height: 4, goods: 3, pos: [235, 950], between: 'hyacinth', label: [89, 936] },
+  { zone: 6, height: 3, goods: 2, pos: [80, 815], between: 'daffodil', label: [77, 698] },
+  { zone: 1, height: 4, goods: 3, pos: [80, 455], between: 'crocus', label: [100, 318] },
+  { zone: 1, height: 3, goods: 2, pos: [80, 245], between: 'hydrangea', label: [138, 152] },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -157,11 +161,11 @@ export const PERENNIALS: Perennial[] = [
     points: 0,
     steps: [
       { actions: [{ kind: 'fruit' }], label: 'Fruit' },
-      { note: 'Perzik oogsten: +2 goederen', label: '2 📦 per perzik' },
+      { note: 'Perzik oogsten: +2 goederen', label: '2📦 per perzik' },
       {},
-      { note: 'Perzik oogsten: nog +1 goed (samen 3)', label: '3 📦 per perzik' },
+      { note: 'Perzik oogsten: nog +1 goed (samen 3)', label: '3📦 per perzik' },
       {},
-      { label: '1 pt per fruit (max 15)' },
+      { label: '1 pt per fruit' },
     ],
   },
   {

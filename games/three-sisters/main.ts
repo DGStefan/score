@@ -32,6 +32,7 @@ import {
   TUIN_W,
   UNITS,
   ZONE_BADGES,
+  type FlowerId,
   type ShedId,
 } from './data';
 import erfUrl from './erf.webp';
@@ -47,6 +48,8 @@ import {
   growCorn,
   growPerennial,
   growPumpkin,
+  previewWater,
+  waterZone,
   growShed,
   growTrack,
   jobTarget,
@@ -55,13 +58,15 @@ import {
   rain,
   resolveJob,
   score,
+  shedEvent,
   spendCompost,
+  takeDie,
   useShovel,
-  waterZone,
   type Result,
   type Sheet,
 } from './model';
 import { TS_RULES } from './rules';
+import { openTable, resetTable } from './table';
 import './three-sisters.css';
 import tuinUrl from './tuin.webp';
 
@@ -90,16 +95,54 @@ initPage({ root: '../../', keepAwake: true });
 const app = mount('#app');
 let state: TsState | null = store.load();
 let tab = readJSON<'tuin' | 'erf'>(TAB_KEY, 'tuin');
+/** Laatst water gegeven zone: even laten oplichten. */
+let watered: { zone: number; at: number } | null = null;
+/** Open keuzevenstertje "water geven in zone X?" met de plek (pixels op de tuintekening). */
+let pendingWater: { zone: number; pos: [number, number] } | null = null;
+const flash = (zone: number): boolean => watered !== null && watered.zone === zone && Date.now() - watered.at < 1200;
 
 function sheetOf(s: TsState): Sheet {
   const { version: _v, player: _p, undo: _u, ...sheet } = s;
   return sheet;
 }
 
+/** Tablet staand: tuin en erf als twee "pagina's" naast elkaar waar je tussen veegt. */
+const SWIPE = matchMedia('(min-width: 761px) and (max-width: 1099px)');
+
 function render(): void {
+  const prev = app.querySelector<HTMLElement>('.ts-boards');
+  const left = prev ? prev.scrollLeft : null;
   app.classList.toggle('ts-wide', Boolean(state));
   app.replaceChildren(state ? playView(state) : setupView());
+  setupSwipe(left);
 }
+
+function setupSwipe(left: number | null): void {
+  const boards = app.querySelector<HTMLElement>('.ts-boards');
+  if (!boards || !SWIPE.matches) return;
+  boards.scrollLeft = left ?? (tab === 'erf' ? boards.scrollWidth : 0);
+  let timer = 0;
+  boards.addEventListener(
+    'scroll',
+    () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const now = boards.scrollLeft > boards.clientWidth / 2 ? 'erf' : 'tuin';
+        if (now === tab) return;
+        tab = now;
+        writeJSON(TAB_KEY, now);
+        // Alleen de tabjes bijwerken; niet opnieuw tekenen (dat zou het vegen onderbreken)
+        app.querySelectorAll<HTMLInputElement>('.ts-tabs input').forEach((input, k) => {
+          input.checked = (k === 0 ? 'tuin' : 'erf') === now;
+        });
+      }, 80);
+    },
+    { passive: true },
+  );
+}
+
+// Draaien van de tablet: opnieuw indelen
+SWIPE.addEventListener('change', () => state && render());
 
 /** Resultaat van een actie toepassen (of de fout tonen). */
 function run(s: TsState, r: Result, el?: Element): void {
@@ -160,6 +203,7 @@ function setupView(): HTMLElement {
     writeJSON(LAST_KEY, name);
     if (name) rememberPlayers([name]);
     state = { version: VERSION, player: name, ...emptySheet(), undo: [] };
+    resetTable();
     store.save(state);
     render();
   };
@@ -213,6 +257,11 @@ function playView(s: TsState): HTMLElement {
           onchange: () => {
             tab = t;
             writeJSON(TAB_KEY, t);
+            const boards = app.querySelector<HTMLElement>('.ts-boards');
+            if (boards && SWIPE.matches) {
+              boards.scrollTo({ left: t === 'erf' ? boards.scrollWidth : 0, behavior: 'smooth' });
+              return;
+            }
             render();
           },
         }),
@@ -240,6 +289,7 @@ function playView(s: TsState): HTMLElement {
         `Ronde ${s.round}/${ROUNDS}`,
       ),
       h('span', { class: 'ts-totalpill', title: 'Totaal' }, `${sc.total} pt`),
+      h('button', { type: 'button', class: 'ts-boardbtn', title: 'Prikbord: stenen en rondes', 'aria-label': 'Prikbord', onclick: () => showTable() }, '📌'),
       rulesButton(TS_RULES),
     ),
     tabs,
@@ -275,6 +325,8 @@ function gardenBoard(s: TsState): HTMLElement {
   const W = TUIN_W;
   const H = TUIN_H;
   const layer = h('div', { class: 'ts-layer' });
+  const preview = pendingWater ? previewWater(s, pendingWater.zone) : null;
+  if (pendingWater) layer.classList.add('asking');
 
   UNITS.forEach((u, i) => {
     const corn = s.corn[i] ?? 0;
@@ -283,7 +335,7 @@ function gardenBoard(s: TsState): HTMLElement {
     layer.append(
       h(
         'div',
-        { class: 'ts-unit', style: place(u.rect, W, H) },
+        { class: `ts-unit${flash(u.zone) ? ' watered' : ''}${preview?.units.includes(i) ? ' will-grow' : ''}`, style: place(u.rect, W, H) },
         h(
           'button',
           {
@@ -292,7 +344,7 @@ function gardenBoard(s: TsState): HTMLElement {
             'aria-label': `Mais zone ${u.zone}: ${corn}/${CORN_HEIGHT}`,
             onclick: (e: Event) => cropTap(s, 'corn', i, e.currentTarget as Element),
           },
-          h('b', { class: 'ts-rib' }, '3'),
+          h('b', { class: 'ts-rib corn' }, '3'),
           boxes(CORN_HEIGHT, corn, { vertical: true, round: (k) => k === CORN_HEIGHT - 1 }),
         ),
         h(
@@ -303,24 +355,33 @@ function gardenBoard(s: TsState): HTMLElement {
             'aria-label': `Boon zone ${u.zone}: ${bean}/${BEAN_HEIGHT}`,
             onclick: (e: Event) => cropTap(s, 'bean', i, e.currentTarget as Element),
           },
-          h('b', { class: 'ts-rib' }, '1'),
+          h('b', { class: 'ts-rib bean' }, '1'),
           boxes(BEAN_HEIGHT, bean, { vertical: true, round: (k) => k === BEAN_HEIGHT - 1 }),
         ),
       ),
     );
   });
 
-  // Bloemen tussen de pompoenen
+  // Bloemen tussen de pompoenen, uitgeschreven zoals op het blad
   PUMPKINS.forEach((p, i) => {
     const q = PUMPKINS[(i + 1) % PUMPKINS.length] as (typeof PUMPKINS)[number];
-    const mid: [number, number] = [(p.pos[0] + q.pos[0]) / 2, (p.pos[1] + q.pos[1]) / 2];
     const both = (s.pumpkin[i] ?? 0) >= p.height && (s.pumpkin[(i + 1) % PUMPKINS.length] ?? 0) >= q.height;
+    const pending = both && s.journal.some((j) => j.kind === p.between && j.source.includes('pompoen'));
     layer.append(
-      h('span', {
-        class: `ts-flowerdot${both ? ' on' : ''}`,
-        style: `${at(mid, W, H)};--c:${FLOWER_COLORS[p.between]}`,
-        title: `${FLOWER_NAMES[p.between]} (oogst beide pompoenen)`,
-      }, FLOWER_NAMES[p.between].slice(0, 1)),
+      h(
+        pending ? 'button' : 'span',
+        {
+          ...(pending ? { type: 'button', onclick: (e: Event) => fillPerennial(s, p.between, e.currentTarget as Element) } : {}),
+          class: `ts-flower${both ? ' on' : ''}${pending ? ' pending' : ''}`,
+          style: `${at(p.label, W, H)};--c:${FLOWER_COLORS[p.between]}`,
+          title: pending
+            ? `Tik om een vakje ${FLOWER_NAMES[p.between]} in te kleuren`
+            : `${FLOWER_NAMES[p.between]}: oogst de twee pompoenen ernaast`,
+        },
+        h('i', { 'aria-hidden': 'true' }, '✿'),
+        FLOWER_NAMES[p.between],
+        pending ? h('em', null, '+1 ›') : null,
+      ),
     );
   });
 
@@ -331,12 +392,13 @@ function gardenBoard(s: TsState): HTMLElement {
         'button',
         {
           type: 'button',
-          class: `ts-pumpkin${v >= p.height ? ' done' : ''}`,
+          class: `ts-pumpkin${v >= p.height ? ' done' : ''}${flash(p.zone) ? ' watered' : ''}${preview?.pumpkins.includes(i) ? ' will-grow' : ''}`,
           style: at(p.pos, W, H),
           'aria-label': `Pompoen zone ${p.zone}: ${v}/${p.height}`,
           onclick: (e: Event) => {
             if (v === 0) run(s, growPumpkin(s, i), e.currentTarget as Element);
-            else openZone(s, p.zone);
+            else if (v >= p.height) toast('Deze pompoen is al geoogst');
+            else askWater(p.zone, p.pos);
           },
         },
         h('b', { class: 'ts-goods' }, `${p.goods}📦`),
@@ -347,11 +409,7 @@ function gardenBoard(s: TsState): HTMLElement {
 
   Object.entries(ZONE_BADGES).forEach(([zone, pos]) => {
     layer.append(
-      h(
-        'button',
-        { type: 'button', class: 'ts-zone', style: at(pos, W, H), 'aria-label': `Zone ${zone}: water geven`, onclick: () => openZone(s, Number(zone)) },
-        zone,
-      ),
+      h('span', { class: 'ts-zone', style: at(pos, W, H), 'aria-hidden': 'true' }, zone),
     );
   });
 
@@ -362,19 +420,30 @@ function gardenBoard(s: TsState): HTMLElement {
       { class: 'ts-perennials', style: place(PERENNIAL_AREA, W, H) },
       PERENNIALS.map((p) => {
         const v = s.per[p.id];
+        const owed = s.journal.filter((j) => j.kind === p.id).length;
         return h(
           'button',
           {
             type: 'button',
-            class: `ts-per${v >= p.steps.length ? ' done' : ''}`,
+            class: `ts-per${v >= p.steps.length ? ' done' : ''}${owed ? ' pending' : ''}`,
             style: `--c:${FLOWER_COLORS[p.id]}`,
-            'aria-label': `${FLOWER_NAMES[p.id]}: ${v}/${p.steps.length}`,
-            onclick: (e: Event) => run(s, growPerennial(s, p.id), e.currentTarget as Element),
+            'aria-label': `${FLOWER_NAMES[p.id]}: ${v}/${p.steps.length}${owed ? `, nog ${owed} in te kleuren` : ''}`,
+            onclick: (e: Event) => fillPerennial(s, p.id, e.currentTarget as Element),
           },
+          owed ? h('span', { class: 'ts-per-owed' }, `+${owed}`) : null,
           h(
             'span',
             { class: 'ts-per-steps' },
-            [...p.steps].map((st, k) => h('span', { class: `ts-step${k < v ? ' on' : ''}${k === v ? ' next' : ''}` }, h('i'), h('small', null, st.label ?? ''))).reverse(),
+            [...p.steps]
+              .map((st, k) =>
+                h(
+                  'span',
+                  { class: `ts-step${k < v ? ' on' : ''}${k === v ? ' next' : ''}${k === p.steps.length - 1 ? ' pts' : ''}` },
+                  h('i'),
+                  h('small', null, st.label ?? ''),
+                ),
+              )
+              .reverse(),
           ),
           h('b', null, FLOWER_NAMES[p.id]),
         );
@@ -387,20 +456,124 @@ function gardenBoard(s: TsState): HTMLElement {
     { class: 'ts-board garden' },
     h('img', { src: tuinUrl, alt: '', width: W, height: H, draggable: false }),
     layer,
+    ...waterPopover(s),
   );
 }
 
+/** Tik op een kolom = volgende vakje (eerste tik = planten, daarna = water geven). */
+/**
+ * Tik op een kolom:
+ *  - nog niet geplant → planten (alleen deze plant)
+ *  - al geplant → water geven in de hele zone (alle geplante gewassen daar groeien één vakje)
+ */
 function cropTap(s: TsState, kind: 'corn' | 'bean', i: number, el: Element): void {
-  const v = kind === 'corn' ? (s.corn[i] ?? 0) : (s.bean[i] ?? 0);
-  if (v === 0) {
+  const planted = kind === 'corn' ? (s.corn[i] ?? 0) > 0 : (s.bean[i] ?? 0) > 0;
+  if (!planted) {
     run(s, kind === 'corn' ? growCorn(s, i) : growBean(s, i), el);
     return;
   }
-  // Al geplant: water geef je per zone
-  openZone(s, UNITS[i]?.zone ?? 1);
+  const full = kind === 'corn' ? (s.corn[i] ?? 0) >= CORN_HEIGHT : (s.bean[i] ?? 0) >= BEAN_HEIGHT;
+  if (full) {
+    toast('Al geoogst. Water geven in deze zone? Tik op een gewas dat nog groeit.');
+    return;
+  }
+  const u = UNITS[i];
+  if (!u) return;
+  void el;
+  askWater(u.zone, [u.rect[0] + u.rect[2] / 2, u.rect[1] + u.rect[3] / 2]);
+}
+
+function askWater(zone: number, pos: [number, number]): void {
+  pendingWater = pendingWater?.zone === zone ? null : { zone, pos };
+  render();
+}
+
+/** Water geven in een zone, met een korte oplichting van die zone. */
+function water(s: TsState, zone: number): void {
+  pendingWater = null;
+  watered = { zone, at: Date.now() };
+  run(s, waterZone(s, zone));
+}
+
+/** Het keuzevenstertje: laat zien wat er groeit en wat er geoogst wordt. */
+function waterPopover(s: TsState): HTMLElement[] {
+  if (!pendingWater) return [];
+  const { zone, pos } = pendingWater;
+  const pv = previewWater(s, zone);
+  const harvest = [
+    pv.corn ? `${pv.corn} mais` : '',
+    pv.bean ? `${pv.bean} ${pv.bean === 1 ? 'boon' : 'bonen'}` : '',
+    pv.pumpkin ? `${pv.pumpkin} ${pv.pumpkin === 1 ? 'pompoen' : 'pompoenen'}` : '',
+  ].filter(Boolean);
+  const x = (pos[0] / TUIN_W) * 100;
+  const below = pos[1] / TUIN_H < 0.45;
+  const y = (pos[1] / TUIN_H) * 100 + (below ? 6 : -6);
+  const close = (): void => {
+    pendingWater = null;
+    render();
+  };
+  return [
+    h('button', { type: 'button', class: 'ts-pop-backdrop', 'aria-label': 'Annuleren', onclick: close }),
+    h(
+      'div',
+      { class: `ts-pop ${below ? 'below' : 'above'}`, style: `left:clamp(min(170px, 50%), ${x}%, max(calc(100% - 170px), 50%));top:${y}%`, role: 'dialog', 'aria-label': `Water geven in zone ${zone}` },
+      h(
+        'p',
+        null,
+        h('b', null, `Zone ${zone}`),
+        pv.grow === 0
+          ? ' · niets om water te geven'
+          : ` · ${pv.grow} ${pv.grow === 1 ? 'gewas groeit' : 'gewassen groeien'}${harvest.length ? `, oogst: ${harvest.join(', ')}` : ''}`,
+      ),
+      h(
+        'div',
+        { class: 'ts-pop-actions' },
+        h('button', { type: 'button', class: 'btn-ghost', onclick: close }, 'Annuleren'),
+        h('button', { type: 'button', class: 'btn-primary', disabled: pv.grow === 0, onclick: () => water(s, zone) }, '💧 Water geven'),
+      ),
+    ),
+  ];
 }
 
 /* ---------- Zone-paneel ---------- */
+
+/**
+ * Vaste plant invullen. Staat er in het journaal een actie voor precies deze bloem
+ * (bv. van twee pompoenen) of een "vaste plant naar keuze", dan wordt die meteen afgestreept.
+ */
+function fillPerennial(s: TsState, f: FlowerId, el?: Element): void {
+  const r = growPerennial(s, f);
+  if (r.error) {
+    if (el) shake(el);
+    toast(r.error);
+    return;
+  }
+  const job = s.journal.find((j) => j.kind === f) ?? s.journal.find((j) => j.kind === 'perennial');
+  if (job) {
+    run(s, { ...r, sheet: resolveJob(r.sheet, job.id), messages: [`✓ ${FLOWER_NAMES[f]} ingevuld (${job.source})`, ...r.messages] });
+  } else run(s, r);
+}
+
+/** Het prikbord (gedeeld scherm voor de stenen en de rondes). */
+function showTable(): void {
+  const cur = (): TsState | null => state;
+  openTable({
+    round: () => cur()?.round ?? 1,
+    setRound: (r) => {
+      const s = cur();
+      if (s) run(s, { sheet: { ...sheetOf(s), round: r }, messages: [] });
+    },
+    takeForMe: (value, space) => {
+      const s = cur();
+      if (s) run(s, takeDie(s, value, space));
+    },
+    event: (e) => {
+      const s = cur();
+      if (!s) return;
+      run(s, e === 'rain' ? rain(s) : e === 'market' ? market(s) : shedEvent(s));
+    },
+  });
+}
 
 function openDialog(title: string, body: (close: () => void) => (HTMLElement | null)[]): void {
   const dialog = h('dialog', { class: 'rules-dialog ts-dialog' });
@@ -415,53 +588,6 @@ function openDialog(title: string, body: (close: () => void) => (HTMLElement | n
   });
   document.body.append(dialog);
   dialog.showModal();
-}
-
-function openZone(s: TsState, zone: number): void {
-  openDialog(`Zone ${zone}`, (close) => {
-    const act = (r: (cur: TsState) => Result): void => {
-      close();
-      if (state) run(state, r(state));
-    };
-    const rows: HTMLElement[] = [];
-    UNITS.forEach((u, i) => {
-      if (u.zone !== zone) return;
-      const n = rows.length / 2 + 1;
-      rows.push(
-        h(
-          'div',
-          { class: 'ts-zrow' },
-          h('span', null, `🌽 Mais ${n}`),
-          boxes(CORN_HEIGHT, s.corn[i] ?? 0, { round: (k) => k === CORN_HEIGHT - 1 }),
-          h('button', { type: 'button', disabled: (s.corn[i] ?? 0) >= CORN_HEIGHT, onclick: () => act((c) => growCorn(c, i)) }, (s.corn[i] ?? 0) === 0 ? 'Plant' : '+1'),
-        ),
-        h(
-          'div',
-          { class: 'ts-zrow' },
-          h('span', null, `🫘 Boon ${n}`),
-          boxes(BEAN_HEIGHT, s.bean[i] ?? 0, { round: (k) => k === BEAN_HEIGHT - 1 }),
-          h('button', { type: 'button', disabled: (s.bean[i] ?? 0) >= BEAN_HEIGHT, onclick: () => act((c) => growBean(c, i)) }, (s.bean[i] ?? 0) === 0 ? 'Plant' : '+1'),
-        ),
-      );
-    });
-    PUMPKINS.forEach((p, i) => {
-      if (p.zone !== zone) return;
-      rows.push(
-        h(
-          'div',
-          { class: 'ts-zrow' },
-          h('span', null, `🎃 Pompoen (${p.goods}📦)`),
-          boxes(p.height, s.pumpkin[i] ?? 0, { round: (k) => k === p.height - 1 }),
-          h('button', { type: 'button', disabled: (s.pumpkin[i] ?? 0) >= p.height, onclick: () => act((c) => growPumpkin(c, i)) }, (s.pumpkin[i] ?? 0) === 0 ? 'Plant' : '+1'),
-        ),
-      );
-    });
-    return [
-      h('button', { type: 'button', class: 'btn-primary btn-big ts-water', onclick: () => act((c) => waterZone(c, zone)) }, `💧 Water geven in zone ${zone}`),
-      h('p', { class: 'muted' }, 'Water geven: elk geplant gewas in deze zone groeit één vakje. Planten: tik "Plant" bij maximaal 2 gewassen (3 met de zaaier). Losse +1 alleen om iets recht te zetten.'),
-      ...rows,
-    ];
-  });
 }
 
 /* ---------- Erf ---------- */

@@ -76,10 +76,11 @@ export const TS_RULES: Rules = {
     {
       heading: 'In deze app',
       list: [
-        'Tik een ongeplant gewas aan om het te planten. Water geven gaat per zone: tik op het zonenummer of op een geplant gewas.',
+        'Tik een ongeplante kolom (mais, boon of pompoen) aan om hem te planten. Tik je een kolom aan die al geplant is, dan zie je wat water geven in die zone doet (welke gewassen groeien en wat er geoogst wordt); bevestig met "Water geven".',
         'Tik een vaste plant, fruitrij, bijenkolom of schuuritem aan voor het volgende vakje.',
         'Goederen, compost, sterren en extra acties rekent de app zelf uit. Extra acties komen in het journaal; tik ✓ als je ze gedaan hebt.',
         'Knoppen onder het blad: rondel (+1 compost +4 goederen), markt en regen.',
+        '📌 Prikbord (rechtsboven): tik de worp in of gooi; de app legt de stenen op de briefjes en schuift Edith door. Tik een steen: "Ik neem hem" zet de acties in je journaal. De laagste overgebleven steen wordt gemarkeerd; daarna de gebeurtenis en "Volgende ronde".',
       ],
     },
   ],

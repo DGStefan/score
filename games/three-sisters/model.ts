@@ -98,6 +98,8 @@ export const ACTION_LABEL: Record<ActionKind, string> = {
   water: 'Water geven in een zone naar keuze',
   plant: 'Planten in een zone naar keuze',
   plantwater: 'Planten of water geven in een zone naar keuze',
+  garden: 'Planten of water geven',
+  apiaryfruit: 'Bijenstal of fruit',
   tulip: 'Tulp',
   hydrangea: 'Hortensia',
   iris: 'Iris',
@@ -198,12 +200,12 @@ function pumpkinStep(d: Draft, i: number): void {
     const f = PUMPKINS[prev]?.between;
     if (f) {
       d.job(f, 'twee pompoenen naast elkaar');
-      d.messages.push(`📓 ${FLOWER_NAMES[f]} (pompoenen naast elkaar)`);
+      d.messages.push(`🌸 Twee pompoenen! Kleur een vakje ${FLOWER_NAMES[f]} in (onderaan, knippert)`);
     }
   }
   if (done(next) && next !== prev) {
     d.job(p.between, 'twee pompoenen naast elkaar');
-    d.messages.push(`📓 ${FLOWER_NAMES[p.between]} (pompoenen naast elkaar)`);
+    d.messages.push(`🌸 Twee pompoenen! Kleur een vakje ${FLOWER_NAMES[p.between]} in (onderaan, knippert)`);
   }
 }
 
@@ -244,6 +246,37 @@ export function waterZone(s: Sheet, zone: number): Result {
   if (grown === 0) d.messages.push(`Zone ${zone}: niets geplant om water te geven`);
   else d.messages.unshift(`💧 Zone ${zone}: ${grown} gewas${grown === 1 ? '' : 'sen'} gegroeid`);
   return d.done();
+}
+
+/** Wat water geven in een zone zou doen (zonder het te doen). */
+export function previewWater(s: Sheet, zone: number): { grow: number; corn: number; bean: number; pumpkin: number; units: number[]; pumpkins: number[] } {
+  const out = { grow: 0, corn: 0, bean: 0, pumpkin: 0, units: [] as number[], pumpkins: [] as number[] };
+  UNITS.forEach((u, i) => {
+    if (u.zone !== zone) return;
+    const c = s.corn[i] ?? 0;
+    const b = s.bean[i] ?? 0;
+    let any = false;
+    if (c > 0 && c < CORN_HEIGHT) {
+      out.grow++;
+      any = true;
+      if (c + 1 === CORN_HEIGHT) out.corn++;
+    }
+    if (b > 0 && b < BEAN_HEIGHT) {
+      out.grow++;
+      any = true;
+      if (b + 1 === BEAN_HEIGHT) out.bean++;
+    }
+    if (any) out.units.push(i);
+  });
+  PUMPKINS.forEach((p, i) => {
+    const v = s.pumpkin[i] ?? 0;
+    if (p.zone === zone && v > 0 && v < p.height) {
+      out.grow++;
+      out.pumpkins.push(i);
+      if (v + 1 === p.height) out.pumpkin++;
+    }
+  });
+  return out;
 }
 
 export function rain(s: Sheet): Result {
@@ -394,6 +427,48 @@ export function market(s: Sheet): Result {
     d.job('perennial', 'etiketten');
     d.messages.push('📓 Etiketten: +1 vaste plant');
   }
+  return d.done();
+}
+
+/* ---------- Steen van het prikbord ---------- */
+
+export type RondelSpace = 'apiaryGold' | 'plant' | 'shedA' | 'goods' | 'apiaryBlue' | 'shedB' | 'market';
+
+/** Steen nemen: tuinactie in zone = waarde, plus de actie van het briefje. */
+export function takeDie(s: Sheet, value: number, space: RondelSpace): Result {
+  let base = s;
+  const messages: string[] = [];
+  if (space === 'goods') {
+    const r = compostAndGoods(s);
+    base = r.sheet;
+    messages.push(...r.messages);
+  } else if (space === 'market') {
+    const r = market(s);
+    base = r.sheet;
+    messages.push(...r.messages);
+  }
+  const d = new Draft(base);
+  d.job('garden', `steen ${value} → zone ${value}`);
+  d.messages.push(`📓 Zone ${value}: planten of water geven`);
+  if (space === 'plant') {
+    d.job('garden', `briefje → nog een keer zone ${value}`);
+    d.messages.push(`📓 Zone ${value}: nog een keer planten of water`);
+  }
+  if (space === 'shedA' || space === 'shedB') {
+    d.job('shed', 'briefje schuurtijd');
+    d.messages.push('📓 Schuuractie');
+  }
+  if (space === 'apiaryGold' || space === 'apiaryBlue') {
+    d.job('apiaryfruit', 'briefje bijen of fruit');
+    d.messages.push('📓 Bijenstal of fruit');
+  }
+  return { sheet: d.s, messages: [...messages, ...d.messages] };
+}
+
+export function shedEvent(s: Sheet): Result {
+  const d = new Draft(s);
+  d.job('shed', 'gebeurtenis schuur');
+  d.messages.push('🧰 Gebeurtenis: schuuractie (in je journaal)');
   return d.done();
 }
 
