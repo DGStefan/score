@@ -1,7 +1,7 @@
 // Eenvoudige service worker: altijd eerst het netwerk (dus altijd de nieuwste versie),
 // en als je offline bent de laatst opgehaalde versie uit de cache.
 // Staat in /public en wordt dus ongewijzigd (als JS) meegekopieerd.
-const CACHE = 'scores-v1';
+const CACHE = 'scores-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -22,7 +22,8 @@ self.addEventListener('fetch', (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       try {
-        const response = await fetch(request);
+        // Pagina's altijd bij de server navragen (niet uit de HTTP-cache van de browser)
+        const response = await fetch(request, request.mode === 'navigate' ? { cache: 'no-cache' } : undefined);
         if (response.ok) cache.put(request, response.clone());
         return response;
       } catch (error) {

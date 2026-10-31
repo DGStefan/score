@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -19,7 +19,23 @@ function pages(): Record<string, string> {
   return input;
 }
 
+/** Uniek per build: de app vergelijkt dit met /version.json om een update te herkennen. */
+const BUILD_ID = new Date().toISOString();
+
+/** Schrijft version.json naast de build, met dezelfde BUILD_ID als in de code. */
+function versionFile(): Plugin {
+  return {
+    name: 'version-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: BUILD_ID }) });
+    },
+  };
+}
+
 export default defineConfig({
+  define: { __BUILD_ID__: JSON.stringify(BUILD_ID) },
+  plugins: [versionFile()],
   // Relatieve paden: de build werkt in elke (sub)map op een server.
   base: './',
   resolve: {
