@@ -28,6 +28,7 @@ import {
   YELLOW_VALUES,
   bonusHelp,
   bonusLabel,
+  consumeBonus,
   countKind,
   earnedBonuses,
   emptySheet,
@@ -87,16 +88,32 @@ function render(): void {
 }
 
 /** Nieuw blad opslaan (vorige op de ongedaan-stapel) en nieuwe bonussen melden. */
-function apply(s: GscState, next: Sheet): void {
-  const before = new Set(earnedBonuses(sheetOf(s)).map((b) => b.id));
-  state = { ...s, ...next, undo: [...s.undo, sheetOf(s)].slice(-MAX_UNDO) };
+function apply(s: GscState, raw: Sheet): void {
+  const prev = sheetOf(s);
+  const before = new Set(earnedBonuses(prev).map((b) => b.id));
+  const { sheet: next, used } = consumeBonus(prev, raw);
+  state = { ...s, ...next, undo: [...s.undo, prev].slice(-MAX_UNDO) };
   store.save(state);
   render();
   const fresh = earnedBonuses(next).filter((b) => !before.has(b.id) && !b.id.startsWith('round-'));
+  const messages: string[] = [];
+  if (used) messages.push(`✓ Bonus "${bonusLabel(used.kind)}" gebruikt`);
   if (fresh.length > 0) {
     confetti({ count: 60 });
-    toast(`🎁 Bonus: ${fresh.map((b) => bonusLabel(b.kind)).join(', ')}`, 3500);
+    messages.push(`🎁 Bonus: ${fresh.map((b) => bonusLabel(b.kind)).join(', ')}`);
   }
+  if (messages.length) toast(messages.join(' · '), 3500);
+}
+
+/** Openstaande getal-bonus voor oranje of paars (bv. "6 in paars"), als die er is. */
+function valueBonus(sheet: Sheet, area: 'orange' | 'purple'): number | null {
+  for (const b of pendingBonuses(sheet)) {
+    if (area === 'orange' && b.kind === 'orange4') return 4;
+    if (area === 'orange' && b.kind === 'orange5') return 5;
+    if (area === 'orange' && b.kind === 'orange6') return 6;
+    if (area === 'purple' && b.kind === 'purple6') return 6;
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -208,11 +225,32 @@ function shake(el: HTMLElement): void {
 }
 
 /** Getal 1–6 kiezen (oranje/paars). */
-function pickNumber(title: string, allowed: (n: number) => boolean, onPick: (n: number) => void, onClear?: () => void): void {
+function pickNumber(
+  title: string,
+  allowed: (n: number) => boolean,
+  onPick: (n: number) => void,
+  onClear?: () => void,
+  bonus?: number | null,
+): void {
   const dialog = h(
     'dialog',
     { class: 'gsc-picker' },
     h('h3', null, title),
+    bonus
+      ? h(
+          'button',
+          {
+            type: 'button',
+            class: 'btn-primary gsc-picker-bonus',
+            onclick: () => {
+              dialog.close();
+              onPick(bonus);
+            },
+          },
+          `🎁 Bonus: ${bonus} invullen`,
+        )
+      : null,
+    bonus ? h('small', { class: 'muted' }, 'Of een gewone steen:') : null,
     h(
       'div',
       { class: 'gsc-picker-grid' },
@@ -588,10 +626,22 @@ function orangeView(s: GscState, sheet: Sheet): HTMLElement {
             shake(e.currentTarget as HTMLElement);
             return toast('Oranje vul je van links naar rechts in');
           }
-          pickNumber(`Oranje${mult > 1 ? ` (telt ×${mult})` : ''}`, () => true, (n) => apply(s, { ...sheet, orange: [...sheet.orange, n] }));
+          pickNumber(
+            `Oranje${mult > 1 ? ` (telt ×${mult})` : ''}`,
+            () => true,
+            (n) => apply(s, { ...sheet, orange: [...sheet.orange, n] }),
+            undefined,
+            valueBonus(sheet, 'orange'),
+          );
         },
       },
-      value !== undefined ? h('span', { class: 's-val' }, value) : mult > 1 ? h('span', { class: 's-hint' }, `×${mult}`) : null,
+      value === undefined && i === sheet.orange.length && valueBonus(sheet, 'orange')
+        ? h('span', { class: 's-bonusnext', title: 'Openstaande bonus' }, `🎁${valueBonus(sheet, 'orange')}`)
+        : value !== undefined
+          ? h('span', { class: 's-val' }, value)
+          : mult > 1
+            ? h('span', { class: 's-hint' }, `×${mult}`)
+            : null,
       value !== undefined && mult > 1 ? h('span', { class: 's-mult', title: `telt ×${mult} = ${value * mult}` }, `×${mult}`) : null,
       bonus ? h('span', { class: 's-under' }, bonusTag(bonus, value !== undefined)) : null,
     );
@@ -620,11 +670,16 @@ function purpleView(s: GscState, sheet: Sheet): HTMLElement {
             prev === undefined || prev === 6 ? 'Paars' : `Paars: hoger dan ${prev}`,
             (n) => purpleAllowed(sheet, n),
             (n) => apply(s, { ...sheet, purple: [...sheet.purple, n] }),
+            undefined,
+            valueBonus(sheet, 'purple'),
           );
         },
       },
       i > 0 ? h('span', { class: 's-lt', 'aria-hidden': 'true' }, '<') : null,
       value !== undefined ? h('span', { class: 's-val' }, value) : null,
+      value === undefined && i === sheet.purple.length && valueBonus(sheet, 'purple')
+        ? h('span', { class: 's-bonusnext', title: 'Openstaande bonus' }, `🎁${valueBonus(sheet, 'purple')}`)
+        : null,
       bonus ? h('span', { class: 's-under' }, bonusTag(bonus, value !== undefined)) : null,
     );
   });

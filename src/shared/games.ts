@@ -85,6 +85,15 @@ export const GAMES: readonly GameInfo[] = [
     status: 'beschikbaar',
   },
   {
+    id: 'three-sisters',
+    name: 'Three Sisters',
+    description: 'Mais, bonen, pompoenen, bijen en fruit. Goederen, compost, sterren en extra acties worden voor je bijgehouden.',
+    icon: '🌽',
+    kind: 'dobbel',
+    color: '#5f9e3a',
+    status: 'beschikbaar',
+  },
+  {
     id: 'keer-op-keer',
     name: 'Keer op Keer',
     description: 'Scoreblad voor op de tablet: zelf afkruisen, de score rekent mee.',

@@ -153,6 +153,37 @@ export function pendingBonuses(s: Sheet): Bonus[] {
   return earnedBonuses(s).filter((b) => !['reroll', 'plus', 'fox'].includes(b.kind) && !s.bonusDone.includes(b.id));
 }
 
+/**
+ * Wie zelf een vakje invult terwijl er een passende bonus openstaat, gebruikt daarmee die bonus.
+ * Zo blijft de bonus niet "open" staan en wordt hij niet per ongeluk nog een keer ingevuld.
+ */
+export function consumeBonus(prev: Sheet, next: Sheet): { sheet: Sheet; used: Bonus | null } {
+  if (next.bonusDone.length !== prev.bonusDone.length) return { sheet: next, used: null };
+  const pending = pendingBonuses(prev);
+  const find = (...kinds: BonusKind[]): Bonus | null => {
+    for (const k of kinds) {
+      const b = pending.find((p) => p.kind === k);
+      if (b) return b;
+    }
+    return null;
+  };
+  let used: Bonus | null = null;
+  if (next.orange.length === prev.orange.length + 1) {
+    const v = next.orange[next.orange.length - 1];
+    used = v === 4 ? find('orange4') : v === 5 ? find('orange5') : v === 6 ? find('orange6', 'anyX6') : null;
+  } else if (next.purple.length === prev.purple.length + 1) {
+    used = next.purple[next.purple.length - 1] === 6 ? find('purple6', 'anyX6') : null;
+  } else if (next.green === prev.green + 1) {
+    used = find('greenX', 'anyX6');
+  } else if (next.blue.length === prev.blue.length + 1) {
+    used = find('blueX', 'anyX6');
+  } else if (next.yellow.filter(Boolean).length === prev.yellow.filter(Boolean).length + 1) {
+    used = find('yellowX', 'anyX6');
+  }
+  if (!used) return { sheet: next, used: null };
+  return { sheet: { ...next, bonusDone: [...next.bonusDone, used.id] }, used };
+}
+
 export function countKind(s: Sheet, kind: BonusKind): number {
   return earnedBonuses(s).filter((b) => b.kind === kind).length;
 }

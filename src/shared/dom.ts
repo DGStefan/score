@@ -37,6 +37,8 @@ export function mount(selector: string): HTMLElement {
 
 /** Korte melding onderin het scherm. */
 export function toast(message: string, ms = 2500): void {
+  // Eén melding tegelijk: een nieuwe vervangt de vorige (anders stapelen ze over elkaar)
+  document.querySelectorAll('.toast').forEach((old) => old.remove());
   const el = h('div', { class: 'toast', role: 'status' }, message);
   document.body.append(el);
   requestAnimationFrame(() => el.classList.add('show'));

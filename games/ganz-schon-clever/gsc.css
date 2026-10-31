@@ -680,6 +680,31 @@
   pointer-events: none;
 }
 
+/* Openstaande getal-bonus in het volgende vakje */
+.s-bonusnext {
+  font-size: 2.4cqw;
+  font-style: normal;
+  font-weight: 900;
+  color: var(--ink);
+  white-space: nowrap;
+  animation: s-bonus-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes s-bonus-pulse {
+  50% { opacity: 0.45; }
+}
+
+.gsc-picker-bonus {
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 6px;
+  font-size: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-bonusnext { animation: none; }
+}
+
 /* ---------- Responsief (staat onderaan zodat het voorgaat) ---------- */
 /* Telefoon: blad zo breed als het scherm, geen hoogtegrens (liever scrollen dan piepklein) */
 @media (max-width: 600px) {

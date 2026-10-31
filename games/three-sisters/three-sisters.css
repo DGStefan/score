@@ -1,0 +1,717 @@
+/* Three Sisters — eigen tekeningen als achtergrond, vakjes als laag erover (alles in % / cqw) */
+
+.wrap.ts-wide {
+  max-width: 1500px;
+}
+
+.ts .topbar h1 .muted {
+  font-weight: 400;
+}
+
+.ts-roundpill,
+.ts-totalpill {
+  min-height: 36px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border-color: transparent;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ts-totalpill {
+  display: inline-flex;
+  align-items: center;
+  background: #2f6f3e;
+  color: #fff;
+}
+
+.ts-tabs {
+  margin-bottom: 12px;
+}
+
+.ts-boards {
+  display: grid;
+  gap: 14px;
+}
+
+/* Telefoon: blad niet kleiner dan 720px; zijwaarts schuiven */
+@media (max-width: 760px) {
+  .ts-boards {
+    overflow-x: auto;
+    margin-inline: -16px;
+    padding: 0 16px 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ts-board {
+    width: 720px;
+  }
+}
+
+/* Smal: één helft tegelijk (tabs) */
+.ts.tab-tuin .ts-board.yard,
+.ts.tab-erf .ts-board.garden {
+  display: none;
+}
+
+/* Breed: beide helften naast elkaar, tabs weg */
+@media (min-width: 1100px) {
+  .ts-tabs {
+    display: none;
+  }
+
+  .ts-boards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ts.tab-tuin .ts-board.yard,
+  .ts.tab-erf .ts-board.garden {
+    display: block;
+  }
+}
+
+.ts-board {
+  position: relative;
+  container-type: inline-size;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  user-select: none;
+  -webkit-user-select: none;
+  color: #2a2116;
+  font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif;
+}
+
+.ts-board img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ts-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.ts-layer button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.ts-layer button:active {
+  transform: none;
+}
+
+.shake {
+  animation: ts-shake 0.35s;
+}
+
+@keyframes ts-shake {
+  25% { translate: -4px 0; }
+  75% { translate: 4px 0; }
+}
+
+/* ---------- Vakjes ---------- */
+.ts-boxes {
+  display: inline-flex;
+  gap: 0.35cqw;
+}
+
+.ts-boxes.v {
+  flex-direction: column;
+}
+
+.ts-boxes i,
+.ts-cell i,
+.ts-step i {
+  display: block;
+  width: 2.5cqw;
+  height: 2.5cqw;
+  border: 0.25cqw solid #3b2f22;
+  border-radius: 0.4cqw;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 0.2cqw 0.5cqw rgb(0 0 0 / 0.25);
+}
+
+.ts-boxes i.r,
+.ts-cell.r i {
+  border-radius: 50%;
+}
+
+.ts-boxes i.on,
+.ts-cell.on i,
+.ts-step.on i {
+  background:
+    linear-gradient(45deg, transparent 42%, #2a2116 42% 58%, transparent 58%),
+    linear-gradient(-45deg, transparent 42%, #2a2116 42% 58%, transparent 58%),
+    #fff6d8;
+}
+
+/* ---------- Tuin ---------- */
+.ts-unit {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ts-crop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3cqw;
+  padding-bottom: 0.6cqw !important;
+  border-radius: 1cqw !important;
+}
+
+.ts-crop:hover {
+  background: rgb(255 255 255 / 0.18) !important;
+}
+
+.ts-crop.bean.wait .ts-boxes {
+  opacity: 0.45;
+}
+
+.ts-crop.done .ts-boxes i {
+  border-color: #1a7a3a;
+}
+
+.ts-rib {
+  font-size: 1.6cqw;
+  font-weight: 900;
+  color: #fff;
+  background: #2c56a8;
+  border-radius: 999px;
+  padding: 0 0.6cqw;
+  line-height: 1.5;
+}
+
+.ts-pumpkin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3cqw;
+  padding: 0.5cqw !important;
+  border-radius: 1.2cqw !important;
+  background: rgb(255 244 222 / 0.55) !important;
+  box-shadow: 0 0 0 0.25cqw rgb(201 92 30 / 0.6);
+}
+
+.ts-pumpkin.done {
+  box-shadow: 0 0 0 0.35cqw #1a9b5b;
+}
+
+.ts-goods {
+  font-size: 1.5cqw;
+  font-weight: 900;
+  color: #b2361f;
+  white-space: nowrap;
+}
+
+.ts-flowerdot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 3.4cqw;
+  height: 3.4cqw;
+  border-radius: 50%;
+  background: #fff;
+  border: 0.4cqw solid var(--c);
+  color: var(--c);
+  font-size: 1.6cqw;
+  font-weight: 900;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.ts-flowerdot.on {
+  background: var(--c);
+  color: #fff;
+  opacity: 1;
+}
+
+.ts-zone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid !important;
+  place-items: center;
+  width: 6cqw;
+  height: 6cqw;
+  border-radius: 50% !important;
+  background: rgb(255 255 255 / 0.9) !important;
+  box-shadow: 0 0.3cqw 1cqw rgb(0 0 0 / 0.3);
+  font-family: Georgia, serif !important;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 4cqw !important;
+  color: #2a2116;
+}
+
+/* Vaste planten op het zandvlak */
+.ts-perennials {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1cqw;
+}
+
+.ts-per {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.4cqw;
+  padding: 0.6cqw !important;
+  border-radius: 1.2cqw !important;
+  background: rgb(255 250 236 / 0.75) !important;
+  box-shadow: inset 0 0 0 0.3cqw var(--c);
+  text-align: left;
+}
+
+.ts-per.done {
+  background: color-mix(in srgb, var(--c) 30%, #fff) !important;
+}
+
+.ts-per > b {
+  text-align: center;
+  font-size: 1.9cqw;
+  color: color-mix(in srgb, var(--c) 70%, #000);
+}
+
+.ts-per-steps {
+  display: grid;
+  gap: 0.3cqw;
+}
+
+.ts-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+  min-height: 2.8cqw;
+}
+
+.ts-step i {
+  flex: none;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  border-radius: 0;
+  border-width: 0;
+  background: #fff;
+  box-shadow: inset 0 0 0 0.3cqw #3b2f22;
+}
+
+.ts-step.next i {
+  box-shadow: inset 0 0 0 0.4cqw var(--c);
+}
+
+.ts-step small {
+  font-size: 1.25cqw;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+/* ---------- Erf ---------- */
+.ts-apiary {
+  position: absolute;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 1cqw;
+  padding: 1cqw;
+  border-radius: 1.4cqw;
+}
+
+.ts-api-top {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8cqw;
+}
+
+.ts-api {
+  display: grid !important;
+  gap: 0.4cqw;
+  justify-items: start;
+  padding: 0.6cqw !important;
+  border-radius: 1cqw !important;
+  text-align: left;
+}
+
+.ts-api {
+  background: rgb(255 250 236 / 0.88) !important;
+  box-shadow: 0 0.3cqw 1cqw rgb(0 0 0 / 0.2);
+}
+
+.ts-apiary > .ts-api {
+  justify-self: start;
+}
+
+.ts-api.locked {
+  opacity: 0.5;
+}
+
+.ts-api > b {
+  font-size: 1.9cqw;
+}
+
+.ts-api-cells {
+  display: grid;
+  gap: 0.35cqw;
+}
+
+.ts-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+}
+
+.ts-cell small {
+  font-size: 1.3cqw;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ts-cell.next i {
+  box-shadow: 0 0 0 0.35cqw #f2b632;
+}
+
+.ts-fruit {
+  position: absolute;
+  display: flex !important;
+  align-items: center;
+  gap: 1cqw;
+  padding: 0.5cqw 1cqw !important;
+  border-radius: 1.2cqw !important;
+  background: rgb(255 250 236 / 0.75) !important;
+}
+
+.ts-fruit > b {
+  flex: none;
+  width: 9cqw;
+  font-size: 1.8cqw;
+  text-align: left;
+}
+
+.ts-fruit-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5cqw;
+}
+
+.ts-fruit .ts-cell {
+  flex-direction: column;
+  gap: 0;
+}
+
+.ts-fruit .ts-cell small {
+  font-size: 1.2cqw;
+  color: #2c56a8;
+}
+
+.ts-shed {
+  position: absolute;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6cqw !important;
+  border-radius: 1cqw !important;
+  text-align: center;
+}
+
+.ts-shed:hover {
+  background: rgb(255 255 255 / 0.15) !important;
+}
+
+.ts-shed > b {
+  padding: 0.2cqw 0.8cqw;
+  border-radius: 0.6cqw;
+  background: rgb(255 250 236 / 0.92);
+  font-size: 1.7cqw;
+}
+
+.ts-shed > small {
+  padding: 0.1cqw 0.6cqw;
+  border-radius: 0.5cqw;
+  background: rgb(255 250 236 / 0.85);
+  font-size: 1.2cqw;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ts-shed-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.6cqw;
+  padding: 0.4cqw 0.6cqw;
+  border-radius: 0.8cqw;
+  background: rgb(255 250 236 / 0.85);
+}
+
+.ts-shed-foot em {
+  font-style: normal;
+  font-weight: 900;
+  font-size: 1.4cqw;
+  color: #2c56a8;
+}
+
+.ts-shed.done .ts-shed-foot {
+  background: #d9f5e3;
+}
+
+.ts-final {
+  position: absolute;
+  display: grid;
+  place-items: center end;
+  padding-right: 2cqw;
+}
+
+.ts-final table {
+  border-collapse: collapse;
+  background: rgb(255 255 255 / 0.9);
+  font-size: 1.8cqw;
+}
+
+.ts-final th,
+.ts-final td {
+  border: 0.15cqw solid #8a7f72;
+  padding: 0.3cqw 1.2cqw;
+  text-align: left;
+}
+
+.ts-final td {
+  min-width: 6cqw;
+  text-align: right;
+  font-weight: 900;
+}
+
+.ts-final tr.total th,
+.ts-final tr.total td {
+  font-size: 2.2cqw;
+  background: #fff6d8;
+}
+
+.ts-goodsbox,
+.ts-compostbox {
+  position: absolute;
+  display: grid !important;
+  align-content: start;
+  gap: 0.6cqw;
+  padding: 0.8cqw !important;
+  border-radius: 1.2cqw !important;
+  background: rgb(255 250 236 / 0.82) !important;
+  text-align: left;
+  justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ts-goodsbox > b,
+.ts-compostbox > b {
+  font-size: 2cqw;
+}
+
+.ts-goodsbox small,
+.ts-compostbox small {
+  font-weight: 600;
+  font-size: 1.4cqw;
+}
+
+.ts-grid {
+  display: grid;
+  gap: 0.25cqw;
+  width: 100%;
+}
+
+.ts-grid.goods {
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+}
+
+.ts-grid.compost {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.ts-grid i {
+  display: block;
+  aspect-ratio: 2.9;
+  border: 0.15cqw solid #6b5a46;
+  border-radius: 0.3cqw;
+  background: #fff;
+}
+
+.ts-grid.compost i {
+  aspect-ratio: 3.3;
+}
+
+.ts-goodsbox,
+.ts-compostbox {
+  overflow: hidden;
+}
+
+.ts-grid i.star {
+  background: #fff3b8;
+  border-color: #c99a1f;
+}
+
+.ts-grid i.on {
+  background: #3b2f22;
+}
+
+.ts-grid i.star.on {
+  background: #c99a1f;
+}
+
+.ts-grid i.spent {
+  background:
+    linear-gradient(45deg, transparent 44%, #c0392b 44% 56%, transparent 56%),
+    #8a7158;
+}
+
+/* ---------- Paneel naast/onder het blad ---------- */
+.ts-side {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+@media (min-width: 760px) {
+  .ts-side {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    align-items: start;
+  }
+}
+
+.ts-quick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ts-quick button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 64px;
+}
+
+.ts-quick b {
+  font-size: 1.05rem;
+}
+
+.ts-quick small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.ts-journal {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.ts-journal h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.ts-count {
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.ts-journal p {
+  margin: 0;
+}
+
+.ts-journal ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ts-journal li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border-left: 5px solid var(--c, var(--accent));
+}
+
+.ts-journal li > span {
+  display: grid;
+}
+
+.ts-journal li small {
+  color: var(--muted);
+}
+
+/* Dialoogjes */
+.ts-dialog .rules-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.ts-dialog p {
+  margin: 0;
+}
+
+.ts-water {
+  width: 100%;
+}
+
+.ts-zrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 72px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ts-zrow .ts-boxes i {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+  border-radius: 4px;
+}
+
+.ts-zrow .ts-boxes i.r {
+  border-radius: 50%;
+}
+
+.ts-zrow .ts-boxes {
+  gap: 4px;
+}
+
+.ts-btnrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ts-btnrow button {
+  flex: 1 1 70px;
+}
+
+.ts-shovel {
+  width: 100%;
+}
