@@ -13,6 +13,9 @@ import { canCross, cellsOf, colorProgress, isColumnComplete } from '../keer-op-k
 import './kok3.css';
 import {
   BOMB_CELLS,
+  CHIP_BONUS,
+  chipInfo,
+  shuffledChips,
   COLUMN_BONUS,
   CROSSINGS,
   CROSSINGS_PER_ROMAN,
@@ -33,6 +36,8 @@ import {
   status,
   toggleTaken,
   type Bonus,
+  type ChipBack,
+  type ChipBonus,
   type Sheet3,
 } from './model';
 import { KOK3_RULES } from './rules';
@@ -55,8 +60,24 @@ interface Kok3State extends Sheet3 {
 
 const UNDO_SVG =
   '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
+/** Diamant als lijntekening, zoals op het blad. */
 const DIAMOND_SVG =
-  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z" fill="currentColor" opacity=".9"/><path d="M2 9h20M9 3 7.5 9 12 21l4.5-12L15 3" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.2"/></svg>';
+  '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path class="gem-fill" d="M7 4.5h10l4 4.5-9 10.5L3 9z"/><path d="M3 9h18M9.5 4.5 8 9l4 10.5L16 9l-1.5-4.5"/></svg>';
+/** Dik kruis met ronde uiteinden, zoals de ✕-bonus op het blad. */
+const CROSS_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round"/></svg>';
+/** De X-fiche zelf: twee dikke balken met ronde uiteinden, met een randje eronder. */
+const CHIP_SVG =
+  '<svg class="chip-shape" viewBox="0 0 100 100" aria-hidden="true"><path class="edge" d="M24 24l52 52M76 24l-52 52" transform="translate(0 5)"/><path class="face" d="M24 24l52 52M76 24l-52 52"/></svg>';
+
+function cross(): HTMLElement {
+  return h('span', { class: 'kok3-ico', innerHTML: CROSS_SVG });
+}
+
+/** Symbool van een bonus: ✕ als vector, de rest als tekst. */
+function iconOf(bonus: Bonus): HTMLElement | string {
+  return bonus === 'x' ? cross() : ICON[bonus];
+}
 
 const ICON: Record<Bonus, string> = { x: '✕', joker: '!', pass: '◇', bomb: '💣', block: '▦', row3: '→' };
 const BONUS_NAME: Record<Bonus, string> = {
@@ -70,6 +91,7 @@ const BONUS_NAME: Record<Bonus, string> = {
 
 const store = sessionStore<Kok3State>(GAME_ID, VERSION);
 const LAST_KEY = `spel:${GAME_ID}:speler`;
+const REAL_KEY = `spel:${GAME_ID}:echte-fiches`;
 
 initPage({ root: '../../', keepAwake: true });
 
@@ -111,9 +133,17 @@ function apply(s: Kok3State, next: Sheet3): void {
   const newChips = after.chipsDropped - before.chipsDropped;
   if (newChips > 0) {
     const left = X_CHIPS - after.chipsDropped;
-    messages.unshift(
-      `✕ Draai ${newChips === 1 ? 'je meest linkse X-chip' : `${newChips} X-chips`} om (nog ${left}). Staat er een bonus op? Geef hem aan een andere speler.`,
-    );
+    if (next.chipOrder) {
+      const faces = next.chipOrder.slice(before.chipsDropped, after.chipsDropped);
+      const bonusFaces = faces.filter((f) => f !== 'empty');
+      messages.unshift(
+        `✕ X-chip omgedraaid (nog ${left}): ${faces.map((f) => (f === 'empty' ? 'leeg' : `${chipInfo(f).icon} ${chipInfo(f).name}`)).join(', ')}.${bonusFaces.length ? ' Geef de bonus aan een andere speler: tik de chip aan.' : ''}`,
+      );
+    } else {
+      messages.unshift(
+        `✕ Draai ${newChips === 1 ? 'je meest linkse X-chip' : `${newChips} X-chips`} om (nog ${left}) en tik hem aan: wat staat erop?`,
+      );
+    }
     confetti();
   }
   if (after.chipsDropped >= X_CHIPS && before.chipsDropped < X_CHIPS) {
@@ -138,12 +168,14 @@ function setupView(): HTMLElement {
     },
   });
 
+  let realChips = readJSON<boolean>(REAL_KEY, false);
   const start = (e: Event): void => {
     e.preventDefault();
     const name = player.trim();
     writeJSON(LAST_KEY, name);
     if (name) rememberPlayers([name]);
-    state = { version: VERSION, player: name, ...emptySheet3(), undo: [] };
+    writeJSON(REAL_KEY, realChips);
+    state = { version: VERSION, player: name, ...emptySheet3(), ...(realChips ? {} : { chipOrder: shuffledChips() }), undo: [] };
     store.save(state);
     render();
     toast('Gooi eerst je startcombinatie en vul hem in bij de pas-balk.', 3500);
@@ -159,7 +191,19 @@ function setupView(): HTMLElement {
       h(
         'p',
         { style: 'margin-top:0' },
-        'Iedereen houdt zijn eigen blad bij op zijn eigen scherm. Leg je 10 X-chips klaar: wie ze het eerst allemaal kwijt is, wint. Nieuw? Tik op het vraagteken voor de spelregels.',
+        'Iedereen houdt zijn eigen blad bij op zijn eigen scherm. Iedereen heeft 10 X-chips: wie ze het eerst allemaal kwijt is, wint. Nieuw? Tik op het vraagteken voor de spelregels.',
+      ),
+      h(
+        'label',
+        { class: 'check' },
+        h('input', {
+          type: 'checkbox',
+          checked: realChips,
+          onchange: (e: Event) => {
+            realChips = (e.target as HTMLInputElement).checked;
+          },
+        }),
+        h('span', null, 'Ik heb de echte X-fiches', h('br'), h('small', { class: 'muted' }, 'Uit: de app mengt 10 digitale chips voor je en draait ze om.')),
       ),
       h(
         'label',
@@ -206,7 +250,7 @@ function bonusBox(s: Kok3State, sheet: Sheet3, bonus: Bonus | null, opts: { key:
   const taken = opts.first && Boolean(sheet.taken[opts.key]);
   const cls = `kok3-bonus b-${bonus}${opts.first ? ' first' : ' white'}${opts.won && !taken ? ' won' : ''}${taken ? ' taken' : ''}`;
   const aria = `${opts.label}: ${BONUS_NAME[bonus]}${opts.first ? ' (alleen de eerste)' : ''}${taken ? ', een ander was eerder' : ''}`;
-  if (!opts.first) return h('span', { class: cls, title: aria, 'aria-label': aria }, ICON[bonus]);
+  if (!opts.first) return h('span', { class: cls, title: aria, 'aria-label': aria }, iconOf(bonus));
   return h(
     'button',
     {
@@ -216,7 +260,7 @@ function bonusBox(s: Kok3State, sheet: Sheet3, bonus: Bonus | null, opts: { key:
       'aria-label': aria,
       onclick: () => apply(s, toggleTaken(sheet, opts.key)),
     },
-    ICON[bonus],
+    iconOf(bonus),
   );
 }
 
@@ -339,7 +383,7 @@ function playView(s: Kok3State): HTMLElement {
               apply(s, { ...sheet, passManual: manual });
             },
           }),
-          bonus ? h('span', { class: `kok3-pass-bonus${filled ? ' won' : ''}` }, ICON[bonus]) : null,
+          bonus ? h('span', { class: `kok3-pass-bonus${filled ? ' won' : ''}` }, iconOf(bonus)) : null,
           end
             ? h(
                 'span',
@@ -437,15 +481,93 @@ function playView(s: Kok3State): HTMLElement {
     ),
   );
 
-  /* --- X-chips --- */
+  /* --- X-chips: omdraaien, weggeven, cadeau-chips --- */
   const left = X_CHIPS - st.chipsDropped;
+  const backs = sheet.chipBacks ?? [];
+  const received = sheet.received ?? [];
+  const order = sheet.chipOrder;
+  /** Wat er op chip i staat: bij digitale chips weet de app het, anders wat jij invulde. */
+  const faceOf = (i: number): ChipBack | null => {
+    const known = backs[i];
+    if (known) return known;
+    if (order && order[i] === 'empty') return { kind: 'empty' };
+    return null;
+  };
+  const unknown = Array.from({ length: st.chipsDropped }, (_, i) => i).filter((i) => !faceOf(i));
   const chipBox = h(
     'div',
     { class: 'kok3-box kok3-chips' },
-    h('div', { class: 'kok3-chip-row' }, Array.from({ length: X_CHIPS }, (_, i) => h('span', { class: `kok3-chip${i < st.chipsDropped ? ' gone' : ''}` }, '✕'))),
-    h('p', null, h('b', null, left === 0 ? 'Alle X-chips kwijt!' : `Nog ${left} X-chip${left === 1 ? '' : 's'}`)),
-    h('p', { class: 'kok3-tiebreak' }, `${st.crossedCount} vakjes · pas-balk ${st.passFilled} · ${st.fullColumns} volle kolommen`),
-    h('button', { type: 'button', class: 'kok3-gift', onclick: () => useGift(s, sheet) }, '🎁 Cadeau-chip inzetten'),
+    h(
+      'div',
+      { class: 'kok3-chips-head' },
+      h('b', null, left === 0 ? 'Alle X-chips kwijt!' : `Nog ${left} X-chip${left === 1 ? '' : 's'}`),
+      h('small', null, `${st.crossedCount} vakjes · pas-balk ${st.passFilled} · ${st.fullColumns} kolommen`),
+    ),
+    h(
+      'div',
+      { class: 'kok3-chip-row' },
+      Array.from({ length: X_CHIPS }, (_, i) => {
+        const flipped = i < st.chipsDropped;
+        const back = faceOf(i);
+        const owed = flipped && !back && order ? (order[i] as ChipBonus) : null;
+        const cls = !flipped ? '' : owed ? ' flip owed' : !back ? ' flip' : back.kind === 'empty' ? ' gone' : ' given';
+        return h(
+          'button',
+          {
+            type: 'button',
+            class: `kok3-chip${cls}`,
+            disabled: !flipped || (Boolean(order) && back?.kind === 'empty'),
+            'aria-label': !flipped
+              ? `X-chip ${i + 1}`
+              : owed
+                ? `X-chip ${i + 1}: ${chipInfo(owed).name}, tik om weg te geven`
+                : !back
+                  ? `X-chip ${i + 1}: omgedraaid, tik om te zeggen wat erop staat`
+                  : back.kind === 'empty'
+                    ? `X-chip ${i + 1}: leeg, uit het spel`
+                    : `X-chip ${i + 1}: ${chipInfo(back.bonus).name}, weggegeven`,
+            onclick: () => {
+              if (owed) giveChip(s, sheet, i, owed);
+              else if (order && back?.kind === 'bonus') {
+                const chipBacks = [...(sheet.chipBacks ?? [])];
+                chipBacks[i] = null;
+                apply(s, { ...sheet, chipBacks });
+              } else flipChip(s, sheet, i);
+            },
+          },
+          h('span', { class: 'kok3-chip-shape', innerHTML: CHIP_SVG }),
+          owed
+            ? h('span', { class: 'kok3-chip-label' }, chipInfo(owed).icon)
+            : flipped && !back
+              ? h('span', { class: 'kok3-chip-label' }, '?')
+              : flipped && back?.kind === 'bonus'
+                ? h('span', { class: 'kok3-chip-label' }, chipInfo(back.bonus).icon)
+                : null,
+          owed ? h('small', null, 'geef weg') : flipped && back?.kind === 'bonus' ? h('small', null, 'weg') : null,
+        );
+      }),
+    ),
+    h(
+      'div',
+      { class: 'kok3-received' },
+      h('span', { class: 'kok3-received-label' }, '🎁 Gekregen'),
+      received.length === 0 ? h('small', null, 'nog niets') : null,
+      received.map((c) =>
+        h(
+          'button',
+          {
+            type: 'button',
+            class: `kok3-rchip${c.used ? ' used' : ''}`,
+            title: c.used ? 'Gebruikt (tik om terug te zetten)' : `${chipInfo(c.bonus).name}: tik om in te zetten`,
+            onclick: () => useReceived(s, sheet, c.id),
+          },
+          h('span', { class: 'kok3-chip-shape', innerHTML: CHIP_SVG }),
+          h('span', { class: 'kok3-chip-label' }, chipInfo(c.bonus).icon),
+          h('small', null, c.used ? 'gebruikt' : chipInfo(c.bonus).name),
+        ),
+      ),
+      h('button', { type: 'button', class: 'kok3-gift', onclick: () => addReceived(s, sheet) }, '+ Chip gekregen'),
+    ),
   );
 
   /* --- Meldingen --- */
@@ -467,6 +589,30 @@ function playView(s: Kok3State): HTMLElement {
         h('span', null, '💣 Pas-balk: je mag een bom laten ontploffen.'),
         h('button', { type: 'button', class: 'btn-primary', onclick: () => apply(s, { ...sheet, bombsUsed: sheet.bombsUsed + 1, freeCrosses: BOMB_CELLS }) }, 'Ontploffen'),
         h('button', { type: 'button', onclick: () => apply(s, { ...sheet, bombsUsed: sheet.bombsUsed + 1 }) }, 'Overslaan'),
+      ),
+    );
+  }
+  if (unknown.length > 0) {
+    banners.push(
+      h(
+        'div',
+        { class: 'kok2-banner kok3-banner chip', role: 'status' },
+        order
+          ? h('span', null, `🎁 Je chip toont ${chipInfo(order[unknown[0] as number] ?? '').icon} ${chipInfo(order[unknown[0] as number] ?? '').name}. Geef hem aan een andere speler en tik "Weggegeven".`)
+          : h('span', null, `✕ Je hebt ${unknown.length === 1 ? 'een X-chip' : `${unknown.length} X-chips`} omgedraaid. Wat staat erop?`),
+        h(
+          'button',
+          {
+            type: 'button',
+            class: 'btn-primary',
+            onclick: () => {
+              const i = unknown[0] as number;
+              if (order) giveChip(s, sheet, i, order[i] as ChipBonus);
+              else flipChip(s, sheet, i);
+            },
+          },
+          order ? 'Weggegeven' : 'Invullen',
+        ),
       ),
     );
   }
@@ -596,27 +742,97 @@ function chooseStart(s: Kok3State, sheet: Sheet3): void {
   ]);
 }
 
-function useGift(s: Kok3State, sheet: Sheet3): void {
+/** Omgedraaide (echte) X-chip: wat stond erop? Leeg = uit het spel, bonus = weggeven. */
+function flipChip(s: Kok3State, sheet: Sheet3, i: number): void {
+  const setBack = (back: ChipBack | null): void => {
+    const chipBacks = [...(sheet.chipBacks ?? [])];
+    chipBacks[i] = back;
+    apply(s, { ...sheet, chipBacks });
+  };
+  const current = sheet.chipBacks?.[i];
   const option = (icon: string, title: string, help: string, onPick: () => void): HTMLElement =>
     h('button', { type: 'button', class: 'kok2-action', onclick: onPick }, h('span', { class: 'kok2-action-icon' }, icon), h('span', null, h('b', null, title), h('small', null, help)));
-  const dialog = openDialog('Cadeau-chip inzetten', [
-    h('p', { class: 'muted' }, 'Een andere speler gaf je een X-chip met een bonus. Welke staat erop?'),
-    option('💣', 'Bom', 'Tot 4 vakjes in een 2×2 vlak, overal, elke kleur.', () => {
+  const dialog = openDialog(`X-chip ${i + 1} omgedraaid`, [
+    h('p', { class: 'muted' }, 'Wat staat er achterop de chip?'),
+    option('✕', 'Niets', 'De chip gaat uit het spel.', () => {
       dialog.close();
-      apply(s, { ...sheet, freeCrosses: BOMB_CELLS });
+      setBack({ kind: 'empty' });
     }),
-    option('▦', 'Kleurblok', 'Een heel blok van één kleur (aansluitend).', () => {
-      dialog.close();
-      toast('▦ Kruis nu een heel blok van één kleur aan.', 3500);
-    }),
-    option('→', 'Drie op een rij', 'Tot 3 vakjes in één rij, elk aansluitend.', () => {
-      dialog.close();
-      toast('→ Kruis nu tot 3 vakjes in één rij aan.', 3500);
-    }),
-    option('±1', 'Getal ±1', 'Maak een cijfersteen 1 hoger of lager (geen 6).', () => {
-      dialog.close();
-      toast('±1: tel 1 op of af bij je cijfersteen en kruis dan aan.', 3500);
-    }),
+    ...(Object.keys(CHIP_BONUS) as ChipBonus[]).map((b) =>
+      option(CHIP_BONUS[b].icon, CHIP_BONUS[b].name, 'Geef deze aan een andere speler.', () => {
+        dialog.close();
+        setBack({ kind: 'bonus', bonus: b, to: '' });
+      }),
+    ),
+    ...(current ? [h('button', { type: 'button', class: 'btn-ghost', onclick: () => (dialog.close(), setBack(null)) }, 'Wissen (nog niet ingevuld)')] : []),
+  ]);
+}
+
+/** Digitale chip met een bonus: één tik = weggegeven (tik nog eens om terug te zetten). */
+function giveChip(s: Kok3State, sheet: Sheet3, i: number, b: ChipBonus): void {
+  const chipBacks = [...(sheet.chipBacks ?? [])];
+  chipBacks[i] = { kind: 'bonus', bonus: b, to: '' };
+  apply(s, { ...sheet, chipBacks });
+  toast(`${chipInfo(b).icon} ${chipInfo(b).name} weggegeven. De ander tikt bij zich "+ Chip gekregen".`, 3500);
+}
+
+/** Een andere speler gaf je een chip met een bonus: kies welke, klaar. */
+function addReceived(s: Kok3State, sheet: Sheet3): void {
+  const option = (b: ChipBonus): HTMLElement =>
+    h(
+      'button',
+      {
+        type: 'button',
+        class: 'kok2-action',
+        onclick: () => {
+          dialog.close();
+          const received = [...(sheet.received ?? [])];
+          received.push({ id: Date.now(), bonus: b, from: '', used: false });
+          apply(s, { ...sheet, received });
+          toast(`🎁 ${CHIP_BONUS[b].name} gekregen. Tik hem aan als je hem inzet.`, 3000);
+        },
+      },
+      h('span', { class: 'kok2-action-icon' }, CHIP_BONUS[b].icon),
+      h('span', null, h('b', null, CHIP_BONUS[b].name), h('small', null, CHIP_BONUS[b].help)),
+    );
+  const dialog = openDialog('Chip gekregen', [
+    h('p', { class: 'muted' }, 'Welke bonus staat op de chip? Inzetten mag vanaf je volgende beurt.'),
+    ...(Object.keys(CHIP_BONUS) as ChipBonus[]).map(option),
+  ]);
+}
+
+/** Ontvangen chip inzetten (of terugzetten). */
+function useReceived(s: Kok3State, sheet: Sheet3, id: number): void {
+  const received = (sheet.received ?? []).map((c) => ({ ...c }));
+  const chip = received.find((c) => c.id === id);
+  if (!chip) return;
+  if (chip.used) {
+    chip.used = false;
+    apply(s, { ...sheet, received });
+    return;
+  }
+  const info = chipInfo(chip.bonus);
+  const dialog = openDialog(`${info.icon} ${info.name} inzetten`, [
+    h('p', null, info.help),
+    h(
+      'div',
+      { class: 'row stretch' },
+      h('button', { type: 'button', class: 'btn-ghost', onclick: () => dialog.close() }, 'Nog niet'),
+      h(
+        'button',
+        {
+          type: 'button',
+          class: 'btn-primary',
+          onclick: () => {
+            dialog.close();
+            chip.used = true;
+            apply(s, { ...sheet, received, ...(chip.bonus === 'pass' ? { passManual: sheet.passManual + 1 } : {}) });
+            if (chip.bonus !== 'pass') toast(`${info.icon} ${info.help}`, 3500);
+          },
+        },
+        'Inzetten',
+      ),
+    ),
   ]);
 }
 

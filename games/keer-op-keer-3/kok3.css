@@ -115,7 +115,7 @@
   outline-offset: -3px;
 }
 
-/* ---------- Bonusvakjes ---------- */
+/* ---------- Bonussen: losse witte symbolen op het paarse blad, zoals op papier ---------- */
 .kok3-bonus {
   position: relative;
   display: grid;
@@ -125,11 +125,11 @@
   min-height: 0;
   padding: 0;
   border: none;
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--paper-ink);
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
   font-weight: 900;
-  font-size: clamp(0.8rem, 1.6vw, 1.2rem);
+  font-size: clamp(0.9rem, 1.8vw, 1.35rem);
   line-height: 1;
 }
 
@@ -137,43 +137,49 @@
   background: transparent;
 }
 
+/* Roze = alleen voor wie het als eerste haalt */
 .kok3-bonus.first {
-  box-shadow: inset 0 0 0 3px var(--pink);
+  color: #ff7eb3;
 }
 
-.kok3-bonus.b-joker {
-  border-radius: 50%;
-}
-
-.kok3-bonus.b-pass {
-  color: var(--pink);
-}
-
-.kok3-bonus.won::before {
+/* ! staat in een rondje */
+.kok3-bonus.b-joker::before {
   content: '';
   position: absolute;
-  inset: 2px;
+  inset: 16%;
   border-radius: 50%;
-  border: 3px solid #1a9b5b;
+  border: 2.5px solid currentColor;
 }
 
+/* ◇ = pasvakje */
+.kok3-bonus.b-pass {
+  font-size: clamp(1rem, 2vw, 1.5rem);
+}
+
+/* Gehaald: groen rondje eromheen */
 .kok3-bonus.won {
-  background: #d9f5e3;
+  background: rgb(26 155 91 / 0.35);
+  box-shadow: inset 0 0 0 3px #3ccf86;
+  color: #fff;
+}
+
+.kok3-bonus.won.b-joker::before {
+  border-color: transparent;
 }
 
 .kok3-bonus.taken {
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .kok3-bonus.taken::after {
   content: '';
   position: absolute;
-  left: 12%;
-  right: 12%;
+  left: 14%;
+  right: 14%;
   top: 50%;
   height: 3px;
   border-radius: 2px;
-  background: var(--red);
+  background: #ff5a5a;
   transform: rotate(-35deg);
 }
 
@@ -245,7 +251,11 @@
 }
 
 .kok3-pass-fields li.dark .kok3-pass-field {
-  background: #b9a6e3;
+  background: #c9b9ee;
+}
+
+.kok3-pass-fields li.filled .kok3-pass-field {
+  background: #fff6d8;
 }
 
 .kok3-pass-fields li.filled .kok3-pass-field::before,
@@ -273,13 +283,16 @@
   height: 30px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #7d64b8;
-  font-size: 1rem;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 0.95rem;
   font-weight: 900;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.6);
 }
 
 .kok3-pass-bonus.won {
   background: #1a9b5b;
+  box-shadow: none;
 }
 
 .kok3-pass-end {
@@ -288,7 +301,7 @@
 }
 
 .kok3-pass-end .kok3-bonus {
-  width: 30px;
+  width: 34px;
 }
 
 .kok3-pass-help {
@@ -297,16 +310,58 @@
   color: rgb(255 255 255 / 0.7);
 }
 
-/* Breed: pas-balk als zigzag langs de rechterkant */
+/* Breed: pas-balk als zigzag (zoals op het blad), bonussen in één rechte kolom ernaast */
 @media (min-width: 1000px) {
   .kok3-pass-fields {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: 2px;
+    display: grid;
+    gap: 0;
   }
 
-  .kok3-pass-fields li:nth-child(odd) {
-    padding-left: 14px;
+  .kok3-pass-fields li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    align-items: center;
+    min-height: 32px;
+    margin-top: -4px;
+  }
+
+  .kok3-pass-fields li:first-child {
+    margin-top: 0;
+  }
+
+  .kok3-pass-field {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .kok3-pass-fields li:nth-child(even) .kok3-pass-field {
+    justify-self: end;
+  }
+
+  .kok3-pass-fields li > * {
+    grid-row: 1;
+  }
+
+  .kok3-pass-fields li > :not(.kok3-pass-field) {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  /* Stippellijntje van ruit naar bonus */
+  .kok3-pass-fields li.dark:has(.kok3-pass-bonus)::after {
+    content: '';
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: center;
+    margin-left: 50px;
+    margin-right: 36px;
+    border-top: 2px dotted rgb(255 255 255 / 0.35);
+    z-index: -1;
+  }
+
+  .kok3-pass-fields li.dark {
+    position: relative;
+    isolation: isolate;
   }
 }
 
@@ -314,7 +369,18 @@
 .kok3-bottom {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 760px) {
+  .kok3-bottom {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+.kok3-bottom > .kok3-box {
+  align-content: center;
 }
 
 .kok3-jokers {
@@ -383,10 +449,11 @@
 
 .kok3-box {
   display: grid;
-  gap: 6px;
-  padding: 10px;
-  border-radius: 12px;
-  background: rgb(255 255 255 / 0.1);
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 .kok3-colors {
@@ -465,48 +532,229 @@
 }
 
 .kok3-chips {
+  grid-column: 1 / -1;
   align-content: start;
+  gap: 10px;
 }
 
-.kok3-chip-row {
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 3px;
+.kok3-chips-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
 }
 
-.kok3-chip {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  border-radius: 6px;
-  background: #f6c431;
-  color: #8a5a00;
-  font-weight: 900;
-  font-size: clamp(0.8rem, 1.6vw, 1.1rem);
-  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.15);
+.kok3-chips-head b {
+  font-size: 1.15rem;
 }
 
-.kok3-chip.gone {
-  background: transparent;
-  color: rgb(255 255 255 / 0.3);
-  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.25);
-}
-
-.kok3-chips p {
-  margin: 0;
-}
-
-.kok3-tiebreak {
+.kok3-chips-head small {
   font-size: 0.75rem;
   color: rgb(255 255 255 / 0.7);
 }
 
+/* Grote X-chips, zoals de dikke fiches in de doos */
+.kok3-chip-row {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.kok3-chip {
+  --chip: #f6c431;
+  --chip-edge: #c98f0c;
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #2a1d4d;
+}
+
+.kok3-chip:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* Het kruisvormige fiche */
+.kok3-chip-shape,
+.kok3-chip-shape svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.chip-shape path {
+  fill: none;
+  stroke-width: 34;
+  stroke-linecap: round;
+}
+
+.chip-shape .face {
+  stroke: var(--chip);
+}
+
+.chip-shape .edge {
+  stroke: var(--chip-edge);
+}
+
+/* Wit labeltje midden op het fiche, zoals "+/-1" op het echte fiche */
+.kok3-chip-label {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 2.3em;
+  height: 1.8em;
+  padding: 0 0.35em;
+  border-radius: 8px;
+  background: #fff;
+  color: #2a1d4d;
+  font-weight: 900;
+  font-size: clamp(0.8rem, 1.9vw, 1.25rem);
+  line-height: 1;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+/* Omgedraaid, nog niet gezegd wat erop staat / bonus om weg te geven */
+.kok3-chip.flip .chip-shape {
+  filter: drop-shadow(0 0 6px #fff3b0);
+  animation: kok3-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes kok3-glow {
+  50% { filter: drop-shadow(0 0 12px #ffe27a); }
+}
+
+/* Leeg: uit het spel → alleen de omtrek */
+.kok3-chip.gone,
+.kok3-chip.given {
+  --chip: rgb(255 255 255 / 0.08);
+  --chip-edge: transparent;
+}
+
+.kok3-chip.gone .chip-shape .face,
+.kok3-chip.given .chip-shape .face {
+  stroke-width: 34;
+}
+
+.kok3-chip.gone .chip-shape,
+.kok3-chip.given .chip-shape {
+  outline: none;
+}
+
+.kok3-chip.given .kok3-chip-label {
+  background: rgb(255 255 255 / 0.55);
+}
+
+.kok3-chip small {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  z-index: 1;
+  font-size: clamp(0.55rem, 1vw, 0.72rem);
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.kok3-received {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgb(255 255 255 / 0.3);
+}
+
+.kok3-received-label {
+  font-weight: 800;
+}
+
+.kok3-received > small {
+  color: rgb(255 255 255 / 0.6);
+}
+
+.kok3-rchip {
+  --chip: #f6c431;
+  --chip-edge: #c98f0c;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.kok3-rchip .kok3-chip-label {
+  font-size: 0.8rem;
+}
+
+.kok3-rchip small {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  translate: -50% 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.kok3-rchip.used {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.kok3-received {
+  padding-bottom: 14px;
+}
+
 .kok3-gift {
-  min-height: 40px;
+  min-height: 44px;
+  margin-left: auto;
   border: none;
   background: rgb(255 255 255 / 0.18);
   color: #fff;
   font-weight: 700;
+}
+
+.kok3-flip {
+  display: grid;
+  gap: 8px;
+}
+
+.kok3-flip p {
+  margin: 0;
+}
+
+.kok3-flip .row input {
+  flex: 1;
+}
+
+@media (max-width: 520px) {
+  .kok3-chip-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kok3-chip.flip .chip-shape { animation: none; }
 }
 
 /* Kop: X-chips over */
@@ -600,4 +848,65 @@
 .kok3-pick-num.on {
   background: #1f1d1a;
   color: #fff;
+}
+
+/* Waar je nu nog niet mag kruisen: iets gedempt (zoals bij Keer op Keer 1), geen randjes */
+.kok3-sheet .kok-cell.blocked {
+  filter: saturate(0.8) brightness(0.86);
+}
+
+/* ✕ als dik vectorkruis, overal even groot binnen zijn vakje */
+.kok3-ico {
+  position: absolute;
+  inset: 24%;
+  display: grid;
+  place-items: center;
+}
+
+.kok3-ico svg {
+  width: 100%;
+  height: 100%;
+}
+
+.kok3-pass-bonus {
+  position: relative;
+}
+
+.kok3-pass-bonus .kok3-ico {
+  inset: 22%;
+}
+
+.kok3-joker-label .kok3-ico {
+  position: static;
+}
+
+/* Diamanten als lijntekening */
+.kok3-diamond {
+  inset: 18%;
+  color: #fff;
+}
+
+.kok3-diamond .gem-fill {
+  fill: rgb(255 255 255 / 0.28);
+}
+
+.kok3-dslot {
+  padding: 16%;
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.25);
+  color: rgb(255 255 255 / 0.55);
+}
+
+.kok3-dslot .gem-fill {
+  fill: transparent;
+}
+
+.kok3-dslot.on {
+  background: #fff;
+  box-shadow: none;
+  color: #5b3e93;
+}
+
+.kok3-dslot.on .gem-fill {
+  fill: #e9e1fb;
 }

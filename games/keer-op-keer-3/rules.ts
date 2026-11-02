@@ -80,6 +80,8 @@ export const KOK3_RULES: Rules = {
         'Tik vakjes aan om ze te kruisen; de app bewaakt de aansluitregel en ziet zelf welke bonussen je haalt.',
         'Was een ander eerder met een roze bonus? Tik op die bonus om hem door te strepen.',
         'De X-chips, ruitjes, kruispunten en vrijgespeelde jokers worden automatisch bijgehouden.',
+        'Geen fiches? Dan mengt de app 10 digitale X-chips en draait hij ze om. Staat er een bonus op, geef hem aan een andere speler en tik de chip aan (weggegeven). (Met echte fiches: tik de chip aan en zeg wat erop staat.)',
+        'Kreeg je een chip van een ander? Tik "+ Chip gekregen". Inzetten = de chip aantikken; daarna wordt hij grijs.',
       ],
     },
   ],

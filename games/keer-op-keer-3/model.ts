@@ -91,6 +91,53 @@ export interface Sheet3 extends SheetMarks {
   /** Startcombinatie (voor het passen). */
   startColor: ColorKey | null;
   startNumber: number | null;
+  /** Per omgedraaide X-chip (op volgorde): wat stond er achterop, en aan wie gegeven. */
+  chipBacks?: (ChipBack | null)[];
+  /** Cadeau-chips die je van andere spelers kreeg. */
+  received?: ReceivedChip[];
+  /** Digitale chips (wie de fiches niet heeft): de gemengde volgorde. Leeg = echte fiches. */
+  chipOrder?: ChipFace[];
+}
+
+/** Bonussen die achter op een X-chip kunnen staan (zoals genoemd in de spelregels). */
+export type ChipBonus = 'pass' | 'joker' | 'plusmin';
+
+export const CHIP_BONUS: Record<ChipBonus, { icon: string; name: string; help: string }> = {
+  pass: { icon: '◇', name: 'Pasvakje', help: 'Kruis het volgende vakje op je pas-balk aan.' },
+  joker: { icon: '!', name: 'Joker', help: 'Gebruik één joker (? of zwart ✕) zonder een ! af te strepen.' },
+  plusmin: { icon: '±1', name: 'Getal ±1', help: 'Maak een cijfersteen 1 hoger of lager (een 5 wordt geen 6).' },
+};
+
+/** Onbekende (oude) bonus netjes tonen. */
+export function chipInfo(b: string): { icon: string; name: string; help: string } {
+  return CHIP_BONUS[b as ChipBonus] ?? { icon: '?', name: 'Bonus', help: '' };
+}
+
+/** Wat er op een X-chip staat: niets, of een bonus. */
+export type ChipFace = 'empty' | ChipBonus;
+
+/**
+ * De 10 chips van één speler: 3 met een bonus (van elke soort één), 7 leeg.
+ */
+export const CHIP_SET: ChipFace[] = ['plusmin', 'joker', 'pass', 'empty', 'empty', 'empty', 'empty', 'empty', 'empty', 'empty'];
+
+/** Gemengd en verdekt neergelegd, zoals in de regels. */
+export function shuffledChips(): ChipFace[] {
+  const a = [...CHIP_SET];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j] as ChipFace, a[i] as ChipFace];
+  }
+  return a;
+}
+
+export type ChipBack = { kind: 'empty' } | { kind: 'bonus'; bonus: ChipBonus; to: string };
+
+export interface ReceivedChip {
+  id: number;
+  bonus: ChipBonus;
+  from: string;
+  used: boolean;
 }
 
 export function emptySheet3(): Sheet3 {
